@@ -1,6 +1,14 @@
+"use client";
 import React from "react";
 
 const Socialicons = () => {
+  // share handler
+  const handleShare = () => {
+    const url = window.location.href;
+    navigator.clipboard.writeText(url);
+    alert("url copied");
+  };
+
   return (
     <div className="flex gap-4 ms-auto">
       <button>
@@ -37,7 +45,7 @@ const Socialicons = () => {
           />
         </svg>
       </button>
-      <button>
+      <button onClick={handleShare}>
         <svg
           width="25"
           height="24"

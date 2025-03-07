@@ -14,7 +14,7 @@ const Landingheader = () => {
       </a>
       <div className="ms-auto flex items-center gap-3 md:gap-10">
         {/* home svg */}
-        <Link href={"/home"}>
+        <Link href={"/home"} className="cursor-pointer">
           <button className="hidden md:inline-block">
             <svg
               width="28"
@@ -34,7 +34,7 @@ const Landingheader = () => {
           </button>
         </Link>
         {/* search svg */}
-        <button>
+        {/* <button>
           <svg
             className="w-8 h-8 md:w-[40px] md:h-[40px]"
             viewBox="0 0 35 36"
@@ -49,9 +49,9 @@ const Landingheader = () => {
               strokeLinejoin="round"
             />
           </svg>
-        </button>
+        </button> */}
         {/* menu svg */}
-        <button>
+        {/* <button>
           <svg
             className="w-8 h-8 md:w-[50px] md:h-[50px]"
             viewBox="0 0 50 50"
@@ -63,7 +63,7 @@ const Landingheader = () => {
               fill="white"
             />
           </svg>
-        </button>
+        </button> */}
       </div>
     </nav>
   );

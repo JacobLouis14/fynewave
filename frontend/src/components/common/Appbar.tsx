@@ -15,7 +15,7 @@ const Appbar = () => {
         <Image src="/logo.png" alt="logo" fill sizes="100%,100%" />
       </a>
       {/* search container */}
-      <div className="ms-auto flex w-2/3">
+      {/* <div className="ms-auto flex w-2/3">
         <input
           type="text"
           className="w-full outline-none bg-transparent py-3 ps-3 hover:bg-headerRedTo rounded-lg placeholder:text-white placeholder:opacity-55"
@@ -24,7 +24,7 @@ const Appbar = () => {
         <button className="hover:bg-headerRedTo py-2 px-3 rounded-full">
           <SearchIcon />
         </button>
-      </div>
+      </div> */}
       {/* menu */}
       <div className="ms-auto flex justify-between items-center lg:pe-5">
         <NewsSubscribebtn
@@ -36,9 +36,9 @@ const Appbar = () => {
             </div>
           }
         />
-        <button>
+        {/* <button>
           <MenuIcon className="text-4xl" />
-        </button>
+        </button> */}
       </div>
       {/* subscribe modal */}
       <Subscribemodal />
