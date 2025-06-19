@@ -75,6 +75,10 @@ const articleSchema = new mongosse.Schema(
       type: Boolean,
       default: false,
     },
+    views: {
+      type: Number,
+      default: 0,
+    },
   },
   { timestamps: true }
 );

@@ -16,42 +16,46 @@ const Articlesupportive = ({
   return (
     <div className="flex flex-col gap-5">
       {/* Sound & Music */}
-      <div>
-        <h2 className="font-raleway text-3xl font-medium lg:font-normal">
-          Sound and Music
-        </h2>
-        {/* iframe container */}
-        <div className="flex flex-col pt-3 gap-2">
-          {songsIframe.map((frames, index) => (
-            <div key={index}>
-              <div dangerouslySetInnerHTML={{ __html: frames }} />
-            </div>
-          ))}
+      {songsIframe.length > 0 && (
+        <div>
+          <h2 className="font-raleway text-3xl font-medium lg:font-normal">
+            Sound and Music
+          </h2>
+          {/* iframe container */}
+          <div className="flex flex-col pt-3 gap-2">
+            {songsIframe.map((frames, index) => (
+              <div key={index}>
+                <div dangerouslySetInnerHTML={{ __html: frames }} />
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
       {/* Video */}
-      <div>
-        <h2 className="font-raleway text-3xl font-medium lg:font-normal">
-          Videos
-        </h2>
-        {/* iframe video container */}
-        <div className="flex flex-col relative pt-3 gap-2 ">
-          {videosIframe.map((vFrames, index) => (
-            <div
-              className="aspect-video"
-              dangerouslySetInnerHTML={{ __html: vFrames }}
-              key={index}
-            />
-          ))}
+      {videosIframe.length > 0 && (
+        <div>
+          <h2 className="font-raleway text-3xl font-medium lg:font-normal">
+            Videos
+          </h2>
+          {/* iframe video container */}
+          <div className="flex flex-col relative pt-3 gap-2 ">
+            {videosIframe.map((vFrames, index) => (
+              <div
+                className="aspect-video"
+                dangerouslySetInnerHTML={{ __html: vFrames }}
+                key={index}
+              />
+            ))}
+          </div>
         </div>
-      </div>
+      )}
       {/* Related Post */}
-      <div className="flex flex-col gap-3">
-        <h2 className="font-raleway text-3xl font-medium lg:font-normal">
-          Related Post
-        </h2>
-        {/* cards */}
-        {relatedPosts && relatedPosts.length > 0 ? (
+      {relatedPosts.length > 0 && (
+        <div className="flex flex-col gap-3">
+          <h2 className="font-raleway text-3xl font-medium lg:font-normal">
+            Related Post
+          </h2>
+          {/* cards */}
           <div className="flex flex-col gap-2">
             {relatedPosts.map((relatedpost) => (
               <Horizontalsmallcard
@@ -60,10 +64,8 @@ const Articlesupportive = ({
               />
             ))}
           </div>
-        ) : (
-          <p className="text-center">no related posts</p>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -410,11 +410,12 @@ const deleteArticleController = async (req, res) => {
   }
 };
 
+// based popularity
 const latestBlogController = async (req, res) => {
   try {
     const latestArticles = await articleModel.aggregate([
       {
-        $sort: { updatedAt: -1 },
+        $sort: { views: -1 },
       },
       {
         $limit: 6,
@@ -445,6 +446,7 @@ const latestBlogController = async (req, res) => {
   }
 };
 
+// sort based freshness
 const otherBlogsController = async (req, res) => {
   try {
     const otherBlogsData = await articleModel.aggregate([

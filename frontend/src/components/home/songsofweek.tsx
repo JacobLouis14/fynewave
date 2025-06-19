@@ -16,13 +16,13 @@ const Songsofweek = async () => {
     allSongsOfTheWeekData.allSongsOfTheWeek &&
     allSongsOfTheWeekData.allSongsOfTheWeek.length < 1
   ) {
-    return <p className="text-center h-36">No songs of the week</p>;
+    return <p className="text-center h-36 ">No songs of the week</p>;
   }
 
   return (
     <div className="py-10 px-3">
       {/* Title */}
-      <h2 className="text-center font-raleway font-medium text-4xl">
+      <h2 className="text-center font-raleway font-semibold text-4xl">
         Featured Songs{/* Songs of the Week */}
       </h2>
       {/* carosel wrapper */}

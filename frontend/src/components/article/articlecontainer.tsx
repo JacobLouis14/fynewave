@@ -60,8 +60,8 @@ const Articlecontainer = ({ articleDataBySlug }: Props) => {
           <p className="text-justify">{articleDataBySlug?.articleContentOne}</p>
         </div>
         {/* 2nd row */}
-        <div>
-          <div className="w-full md:w-96 aspect-square bg-gray-100 mr-4 mb-2 float-left relative">
+        <div className="flex flex-col md:flex-row">
+          <div className="w-full md:h-96 aspect-square bg-gray-100 mr-4 mb-2 relative">
             {articleDataBySlug?.articleContentImageUrl ? (
               <Image
                 src={articleDataBySlug?.articleContentImageUrl}
@@ -79,13 +79,13 @@ const Articlecontainer = ({ articleDataBySlug }: Props) => {
               />
             )}
           </div>
-          <div className="w-full text-justify">
+          <div className="text-justify mt-3 md:mt-0">
             <p>{articleDataBySlug?.articleContentTwo}</p>
           </div>
         </div>
         {/* 3rd row */}
-        <div>
-          <div className="w-full sm:w-96 h-96 ml-4 float-right overflow-y-scroll overflow-x-hidden">
+        <div className="flex flex-col md:flex-row-reverse md:gap-4">
+          <div className="w-full aspect-auto sm:aspect-square h-96 overflow-y-scroll overflow-x-hidden">
             {/* <div
               dangerouslySetInnerHTML={{
                 __html: articleDataBySlug?.articleContentInstagram || "",
@@ -95,7 +95,7 @@ const Articlecontainer = ({ articleDataBySlug }: Props) => {
               embeddCode={articleDataBySlug?.articleContentInstagram || ""}
             />
           </div>
-          <div className="w-full text-justify">
+          <div className="w-full text-justify mt-4 md:mt-0">
             <p>{articleDataBySlug?.articleContentThree}</p>
           </div>
         </div>

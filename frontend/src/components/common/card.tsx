@@ -47,7 +47,7 @@ const Card = <T extends boolean>({ forArtist, CardData }: Props<T>) => {
             </p>
           )}
           <p className="font-raleway font-light pt-2 text-sm">
-            {toReadableDate(CardData?.updatedAt || "")}
+            {toReadableDate(CardData?.createdAt || "")}
           </p>
         </div>
       </div>

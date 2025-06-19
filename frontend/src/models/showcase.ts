@@ -4,6 +4,7 @@ export interface SongOfTheWeekModal {
   category: string;
   album: string;
   updatedAt: string;
+  createdAt: string;
   image: File | null;
   thumbnailUrl?: string;
   slug: string;
@@ -14,6 +15,7 @@ export interface ArtistOfTheWeekModal {
   alternativeTitle: string;
   category: string;
   updatedAt: string;
+  createdAt: string;
   image: File | null;
   thumbnailUrl?: string;
   slug: string;

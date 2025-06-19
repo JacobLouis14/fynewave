@@ -20,7 +20,7 @@ const Artistofweek = async () => {
 
   return (
     <div className="pb-10 pt-5 px-3">
-      <h2 className="text-center font-raleway font-medium text-4xl">
+      <h2 className="text-center font-raleway font-semibold text-4xl">
         Check Them Out!!!{/* Artists of the Week */}
       </h2>
       {/* content -> card Caurosel */}

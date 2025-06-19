@@ -65,7 +65,7 @@ const Article = async ({ params }: Props) => {
         <div className="lg:col-span-8">
           <Articlecontainer articleDataBySlug={articleDataBySlug} />
         </div>
-        <div className="lg:col-span-3 lg:bg-[#F5F4F4] md:px-5 py-8">
+        <div className="lg:col-span-3 bg-[#F5F4F4] md:px-5 py-8">
           <Articlesupportive
             songsIframe={articleDataBySlug?.songsIframes || []}
             videosIframe={articleDataBySlug?.videoIframes || []}

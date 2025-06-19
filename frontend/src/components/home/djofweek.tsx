@@ -21,7 +21,7 @@ const Djofweek = async () => {
   const { allDjsOfTheWeek } = djOfTheWeekData;
   return (
     <div className="pb-10 px-2 lg:px-8">
-      <h2 className="text-center font-raleway font-medium text-4xl">
+      <h2 className="text-center font-raleway font-semibold text-4xl">
         On The Spotlight{/* DJs of the Week */}
       </h2>
       {/* content */}
