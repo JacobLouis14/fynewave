@@ -8,7 +8,7 @@ export interface UserDataModel {
   password?: string;
   name: string;
   email: string;
-  role: number | string;
+  role: string;
   isEditAllowed?: boolean;
   isSuspended?: boolean;
   editAllotedArticle?: [];

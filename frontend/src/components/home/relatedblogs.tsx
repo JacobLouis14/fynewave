@@ -13,12 +13,12 @@ const Relatedblogs = async () => {
     otherBlogData.otherBlogsData &&
     otherBlogData.otherBlogsData?.length < 1
   ) {
-    return <p>No latest blogs</p>;
+    return null;
   }
 
   return (
     <div className="pb-10  px-3">
-      <h2 className="text-center font-raleway font-semibold text-4xl">
+      <h2 className="text-center font-raleway font-bold text-4xl">
         {/* Other Blogs */}More For You
       </h2>
       {/* content */}

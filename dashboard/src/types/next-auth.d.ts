@@ -7,7 +7,7 @@ declare module "next-auth" {
       email: string;
       token: string;
       id: string;
-      role: number;
+      role: string;
       editAllotedArticle: string[];
     };
   }
@@ -16,7 +16,7 @@ declare module "next-auth" {
     email: string;
     token: string;
     id: string;
-    role: number;
+    role: string;
     editAllotedArticle: string[];
   }
 }
@@ -28,7 +28,7 @@ declare module "next-auth/jwt" {
       email: string;
       token: string;
       id: string;
-      role: number;
+      role: string;
       editAllotedArticle: string[];
     };
   }

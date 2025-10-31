@@ -19,6 +19,7 @@ const checkIsAuthorized = async (req, res, next) => {
     //   verify the token and extract data
     jwt.verify(accessToken, process.env.JWTSECRET, (err, decoded) => {
       if (err) return res.status(401).json({ message: "Unauthorized", err });
+
       req.user = decoded;
       next();
     });
@@ -37,7 +38,7 @@ const checkIsAdmin = (req, res, next) => {
     }
 
     // check is admin
-    if (req.user.userRole !== 0) {
+    if (req.user.userRole != "admin" && req.user.userRole != "super_admin") {
       return res
         .status(401)
         .json({ message: "Unauthorized access to admin only" });
@@ -48,7 +49,31 @@ const checkIsAdmin = (req, res, next) => {
   }
 };
 
+const checkIsSuperAdmin = (req, res, next) => {
+  try {
+    // check if user in req
+    if (!req.user) {
+      return res
+        .status(401)
+        .json({ message: "Unauthorized access to super admin only" });
+    }
+
+    // check is admin
+    if (req.user.userRole != "super_admin") {
+      return res
+        .status(401)
+        .json({ message: "Unauthorized access to super admin only" });
+    }
+    next();
+  } catch (error) {
+    res
+      .status(401)
+      .json({ message: "Unauthorized access to super admin only" });
+  }
+};
+
 module.exports = {
   checkIsAuthorized,
   checkIsAdmin,
+  checkIsSuperAdmin,
 };

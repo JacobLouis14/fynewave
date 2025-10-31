@@ -1,3 +1,4 @@
+const { default: mongoose } = require("mongoose");
 const mongosse = require("mongoose");
 
 const articleSchema = new mongosse.Schema(
@@ -27,7 +28,9 @@ const articleSchema = new mongosse.Schema(
       required: true,
     },
     author: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "users",
+      index: true,
       required: true,
     },
     thumbnail: {
@@ -79,9 +82,50 @@ const articleSchema = new mongosse.Schema(
       type: Number,
       default: 0,
     },
+    status: {
+      type: String,
+      enum: [
+        "draft",
+        "published",
+        "pending",
+        "rejected",
+        "scheduled",
+        "deleted",
+      ],
+      required: true,
+      index: true,
+    },
+    reviewedBy: {
+      type: mongosse.Schema.Types.ObjectId,
+      ref: "users",
+    },
+    rejectedReason: {
+      type: String,
+    },
+    publishedAt: {
+      type: Date,
+    },
+    group: {
+      type: String,
+      required: true,
+    },
+    scheduleJobId: {
+      type: String,
+    },
+    scheduledDate: {
+      type: String,
+    },
+    deleteScheduleJobId: {
+      type: String,
+    },
+    deleteAt: {
+      type: String,
+    },
   },
   { timestamps: true }
 );
+
+articleSchema.index({ author: 1, status: 1 });
 
 const articleModel = mongosse.model("article", articleSchema);
 module.exports = articleModel;

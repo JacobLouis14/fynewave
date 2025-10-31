@@ -16,18 +16,21 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { data, error } = await getBlogPostBySlug(params.slug);
-  if (error) return { title: "Article" };
-  return {
-    title: data.articleDataBySlug?.title,
-    description: data.articleDataBySlug?.desc,
-    openGraph: {
-      images: [
-        {
-          url: data.articleDataBySlug?.thumbnailUrl || "",
-        },
-      ],
-    },
-  };
+  if (data) {
+    return {
+      title: data?.articleDataBySlug?.title,
+      description: data?.articleDataBySlug?.desc,
+      openGraph: {
+        images: [
+          {
+            url: data?.articleDataBySlug?.thumbnailUrl || "",
+          },
+        ],
+      },
+    };
+  } else {
+    return { title: "Article" };
+  }
 }
 
 const Article = async ({ params }: Props) => {
@@ -38,7 +41,8 @@ const Article = async ({ params }: Props) => {
     return <p>something went wrong</p>;
   }
 
-  const { articleDataBySlug, relatedArticles } = articlePostData;
+  const articleDataBySlug = articlePostData?.articleDataBySlug ?? null;
+  const relatedArticles = articlePostData?.relatedArticles ?? null;
 
   return (
     <>

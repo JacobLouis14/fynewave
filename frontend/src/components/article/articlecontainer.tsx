@@ -34,7 +34,7 @@ const Articlecontainer = ({ articleDataBySlug }: Props) => {
           <div className="flex gap-8 text-[#7D7983]">
             <div className="flex items-center gap-2 text-sm lg:text-md">
               <PersonOutlineOutlinedIcon />
-              <p className="font-poppins">{articleDataBySlug?.author}</p>
+              <p className="font-poppins">{articleDataBySlug?.author.name}</p>
             </div>
             <div className="flex gap-2 items-center text-sm lg:text-md">
               <CalendarMonthOutlinedIcon />

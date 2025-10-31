@@ -1,84 +1,47 @@
-"use client";
-import Sidebarlist from "@/components/common/sidebarlist";
-import {
-  closeSideBar,
-  openSideBar,
-  sideBarCollapsed,
-} from "@/store/fetures/uiSlice";
-import { useAppDispatch, useAppSelector } from "@/store/storeHook";
-import { userRoleExtractor } from "@/utils/roleExtractor";
-import { useSession } from "next-auth/react";
+import SidebarWrapper from "@/components/common/sidebarWrapper";
+import { authOptions } from "@/config/authOptions";
+import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import React, { useEffect } from "react";
+import AppBarDropdown from "@/components/common/appBarDropdown";
+import Sidebarlist from "@/components/common/sidebarlist";
+import SidebarToggler from "@/components/common/sidebarToggler";
+import AuthGaurd from "@/lib/next-auth/authGaurd";
+import Notification from "@/components/common/notification";
 
 interface Props {
   children: React.ReactNode;
 }
 
-const DashboardLayout = ({ children }: Props) => {
-  const { data: session, status } = useSession();
+const DashboardLayout = async ({ children }: Props) => {
+  const session = await getServerSession(authOptions);
 
   // redirection if no user login
-  useEffect(() => {
-    if (status === "loading") return;
-    if (!session?.user) redirect("/");
-  }, [session, status]);
-
-  const dispatch = useAppDispatch();
-  const sideBarCollapsedValue = useAppSelector(sideBarCollapsed);
-
-  //   sidebar open Handler
-  const handlerSideBarOpen = () => {
-    dispatch(openSideBar());
-  };
-
-  //   sidebar close handler
-  const handlersidebarClose = () => {
-    dispatch(closeSideBar());
-  };
+  if (session === null) redirect("/");
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      {/* side bar */}
-      <div
-        className={`w-screen h-screen border fixed top-0 ${
-          sideBarCollapsedValue ? "-left-full" : "left-0"
-        } md:left-0 md:w-[16rem]  bg-inherit flex flex-col p-3 z-50`}
-      >
-        {/* sidebar header */}
-        <div className="flex">
-          <p>Logo</p>
-          <button onClick={handlersidebarClose} className="ms-auto md:hidden">
-            close
-          </button>
-        </div>
-        {/* sidebar content */}
-        <Sidebarlist />
-      </div>
-      {/* Right side */}
-      <div className="md:ms-[16rem] w-full">
-        {/* appbar */}
-        <div className="flex px-5 py-3 pt-5 bg-darkRed text-white">
-          <div className="md:hidden">
-            <button onClick={handlerSideBarOpen}>
-              <svg
-                className="w-8 h-fit fill-white"
-                viewBox="0 0 30 20"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path d="M0 20V16.6667H30V20H0ZM0 11.6667V8.33333H30V11.6667H0ZM0 3.33333V0H30V3.33333H0Z" />
-              </svg>
-            </button>
+    <AuthGaurd>
+      <div className="flex h-screen bg-gray-50 w-screen">
+        {/* side bar */}
+        <SidebarWrapper session={session}>
+          <Sidebarlist userRole={session.user.role} />
+        </SidebarWrapper>
+        {/* Right side */}
+        <div className="md:ms-[16rem] w-full h-screen flex flex-col">
+          {/* appbar */}
+          <div className="flex px-5 py-3 bg-darkRed text-white h-[8vh]">
+            <div className="md:hidden">
+              <SidebarToggler />
+            </div>
+            <div className="ms-auto flex items-center gap-3 pr-5">
+              {/* <Notification /> */}
+              <AppBarDropdown sessionData={session} />
+            </div>
           </div>
-          <div className="ms-auto">
-            {session && userRoleExtractor(session?.user?.role)}
-          </div>
+          {/* contents */}
+          <div className="h-[92%] relative overflow-hidden">{children}</div>
         </div>
-        {/* contents */}
-        {children}
       </div>
-    </div>
+    </AuthGaurd>
   );
 };
 

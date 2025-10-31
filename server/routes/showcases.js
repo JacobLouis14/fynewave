@@ -1,5 +1,8 @@
 const express = require("express");
-const { checkIsAuthorized } = require("../middlewares/isAuthorized");
+const {
+  checkIsAuthorized,
+  checkIsAdmin,
+} = require("../middlewares/isAuthorized");
 const router = express.Router();
 const multer = require("multer");
 const {
@@ -9,12 +12,12 @@ const {
   getAllArtistOfTheWeek,
   getAllDjsOfTheWeek,
   deleteDjOfTheWeekController,
-  updateSongsOfTheWeekController,
-  updateArtistOfTheWeekController,
-  updateDjsOfTheWeekController,
   getAllLandingCards,
-  updateLandingCardsController,
   deleteLandingCardsController,
+  createSongsOfTheWeekController,
+  createArtistOfTheWeekController,
+  createDjsOfTheWeekController,
+  createLandingCardsController,
 } = require("../controllers/showcases");
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -24,16 +27,18 @@ const upload = multer({
 router.get("/get-songs-of-the-week", getAllSongsOfTheWeek);
 
 // add songs of the week
-router.put(
+router.post(
   "/add-songs-of-the-week/:articleId",
   checkIsAuthorized,
-  updateSongsOfTheWeekController
+  checkIsAdmin,
+  createSongsOfTheWeekController
 );
 
 // delete songs of the week
 router.delete(
-  "/delete-add-songs-of-the-week/:id",
-  //   checkIsAuthorized,
+  "/delete-songs-of-the-week/:id",
+  checkIsAuthorized,
+  checkIsAdmin,
   deleteSongOfTheWeekController
 );
 
@@ -43,16 +48,18 @@ router.delete(
 router.get("/get-artists-of-the-week", getAllArtistOfTheWeek);
 
 // add artist of the week
-router.put(
+router.post(
   "/add-artist-of-the-week/:articleId",
   checkIsAuthorized,
-  updateArtistOfTheWeekController
+  checkIsAdmin,
+  createArtistOfTheWeekController
 );
 
 // delete artist of the week
 router.delete(
   "/delete-artist-of-the-week/:id",
-  //   checkIsAuthorized,
+  checkIsAuthorized,
+  checkIsAdmin,
   deleteArtistOfTheWeekController
 );
 
@@ -62,16 +69,18 @@ router.delete(
 router.get("/get-djs-of-the-week", getAllDjsOfTheWeek);
 
 // add djs of the week
-router.put(
+router.post(
   "/add-dj-of-the-week/:articleId/:djPosition",
-  // checkIsAuthorized,
-  updateDjsOfTheWeekController
+  checkIsAuthorized,
+  checkIsAdmin,
+  createDjsOfTheWeekController
 );
 
 // delete artist of the week
 router.delete(
   "/delete-dj-of-the-week/:id",
-  //   checkIsAuthorized,
+  checkIsAuthorized,
+  checkIsAdmin,
   deleteDjOfTheWeekController
 );
 
@@ -80,9 +89,19 @@ router.delete(
 router.get("/get-landing-cards-details", getAllLandingCards);
 
 // update landing cards
-router.put("/update-landing-cards", updateLandingCardsController);
+router.post(
+  "/create-landing-cards",
+  checkIsAuthorized,
+  checkIsAdmin,
+  createLandingCardsController
+);
 
-// // delete landing card data
-// router.delete("/delete-landing-card-data", deleteLandingCardsController);
+// delete landing card data
+router.delete(
+  "/delete-landing-card/:id",
+  checkIsAuthorized,
+  checkIsAdmin,
+  deleteLandingCardsController
+);
 
 module.exports = router;

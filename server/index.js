@@ -18,6 +18,7 @@ const usersRoutesHandler = require("./routes/users");
 const showcasesRouteHandler = require("./routes/showcases");
 const dashboardMetrics = require("./routes/dashmetrics");
 const newsletterRouteHandler = require("./routes/newsletter");
+const notificationRouteHandler = require("./routes/notification");
 
 // configs
 const server = express();
@@ -32,16 +33,16 @@ const acceptableDomains = [
   "https://admin.fynewave.com",
   "https://www.admin.fynewave.com",
   "https://www.fynewave.com",
+  "http://localhost:3000",
 ];
 let corsOption = {
   origin: function (origin, callback) {
     if (origin === undefined) {
       callback(null, true);
-    } 
-    else if (acceptableDomains.includes(origin)) {
+    } else if (acceptableDomains.includes(origin)) {
       callback(null, true);
     } else {
-      callback(new Error("Forbidden"),false);
+      callback(new Error("Forbidden"), false);
     }
   },
 };
@@ -58,9 +59,8 @@ const helmetConfig = {
   xssFilter: true,
 };
 
-
 // middlewares
-server.options('*', cors(corsOption));
+server.options("*", cors(corsOption));
 server.use(cors(corsOption));
 server.use(helmet(helmetConfig));
 server.use(express.json());
@@ -77,6 +77,7 @@ server.use("/api/users", usersRoutesHandler);
 server.use("/api/showcases", showcasesRouteHandler);
 server.use("/api/dash-metrics", dashboardMetrics);
 server.use("/api/newsletter", newsletterRouteHandler);
+server.use("/api/notifications", notificationRouteHandler);
 
 // Global error handler for CORS rejection
 server.use((err, req, res, next) => {
@@ -92,6 +93,7 @@ const lisenAndConnection = async () => {
   try {
     await dbConnectionHandler();
     const port = process.env.PORT || 4000;
+
     server.listen(port, () => {
       console.log(`server running on port ${port}`);
     });

@@ -2,7 +2,7 @@ import { ArticleModel } from "@/models/article";
 import { toReadableDate } from "@/utils/toReadableDate";
 import Image from "next/image";
 import Link from "next/link";
-import DeleteArticleBtn from "./deleteArticleBtn";
+import DeleteArticleBtn from "./buttons/deleteArticleBtn";
 
 interface Props {
   articleData: Partial<ArticleModel>;

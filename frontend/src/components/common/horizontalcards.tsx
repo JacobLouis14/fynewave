@@ -37,7 +37,7 @@ const Horizontalcards = ({ cardData }: Props) => {
           <div className="flex flex-col md:flex-row mt-3 md:mt-5 gap-3 justify-between text-[#7D7983] flex-wrap">
             <div className="flex gap-3 items-center">
               <PersonOutlineOutlinedIcon className="md:text-4xl" />
-              <p className="font-poppins">{cardData?.author}</p>
+              <p className="font-poppins">{cardData?.author.name}</p>
             </div>
             <div className="flex gap-3 items-center">
               <CalendarMonthOutlinedIcon className="md:text-4xl" />

@@ -125,7 +125,6 @@ export const getDjOfTheWeek = async (): Promise<{
   return { isLoading, data: response?.data, error };
 };
 
-// blog post by slug & related blogs
 export const getBlogPostBySlug = async (
   articleSlug: string
 ): Promise<{
@@ -133,31 +132,48 @@ export const getBlogPostBySlug = async (
   data: {
     message: string;
     articleDataBySlug: ArticleModel | null;
-    relatedArticles: [ArticleModel] | null;
-  };
+    relatedArticles: ArticleModel[] | null;
+  } | null;
   error: { message: string | null } | null;
 }> => {
-  let isLoading: boolean = true;
-  let response: AxiosResponse<any, any> | null = null;
+  let isLoading = true;
   let error: { message: string | null } | null = null;
+  let data: {
+    message: string;
+    articleDataBySlug: ArticleModel | null;
+    relatedArticles: ArticleModel[] | null;
+  } | null = null;
 
   try {
-    response = await axios.get(
-      `${process.env.NEXT_PUBLIC_SERVER_API_BASE_URL}/api/article/get-article-post-data-by-slug/${articleSlug}`
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_SERVER_API_BASE_URL}/api/article/get-article-post-data-by-slug/${articleSlug}`,
+      {
+        // Add caching for Next.js server components (optional)
+        next: { revalidate: 60 },
+      }
     );
+
+    if (!res.ok) {
+      throw new Error(`Server returned ${res.status}`);
+    }
+
+    const json = await res.json();
+    data = json;
   } catch (err: any) {
     error = {
-      message: err.response?.data?.message || "something went wrong",
+      message: err?.message || "Something went wrong while fetching article",
     };
+  } finally {
+    isLoading = false;
   }
 
-  return { isLoading, data: response?.data, error };
+  return { isLoading, data, error };
 };
 
 // for landing cards
 export const getLandingCards = async (): Promise<{
   isLoading: boolean;
-  data: { message: string; allLandingCards: landingCardsModel } | null;
+  data: { message: string; allLandingCards: landingCardsModel[] } | null;
   error: { message: string | null } | null;
 }> => {
   let isLoading: boolean = true;
@@ -218,6 +234,31 @@ export const getArticlesForSitemap = async (): Promise<{
   try {
     response = await axios.get(
       `${process.env.NEXT_PUBLIC_SERVER_API_BASE_URL}/api/article/get-article-for-sitemap`
+    );
+  } catch (err: any) {
+    error = {
+      message: err.response?.data?.message || "something went wrong",
+    };
+  }
+
+  return { isLoading, data: response?.data, error };
+};
+
+// get articles
+export const getArticles = async (
+  search: string
+): Promise<{
+  isLoading: boolean;
+  data: { articles: ArticleModel[] | null };
+  error: { message: string | null } | null;
+}> => {
+  let isLoading: boolean = true;
+  let response: AxiosResponse<any, any> | null = null;
+  let error: { message: string | null } | null = null;
+
+  try {
+    response = await axios.get(
+      `${process.env.NEXT_PUBLIC_SERVER_API_BASE_URL}/api/article/get-articles-on-view?search=${search}`
     );
   } catch (err: any) {
     error = {

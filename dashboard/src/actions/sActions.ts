@@ -1,9 +1,13 @@
 "use server";
 
-import { ArticleForUserEditPermission, ArticleModel } from "@/models/article";
+import {
+  Article,
+  ArticleForUserEditPermission,
+  ArticleModel,
+} from "@/models/article";
 import { UserDataModel, UserForUserEditPermission } from "@/models/auth";
 import { CategoryModel } from "@/models/category";
-import { MailData } from "@/models/emails";
+import { EmailLists, MailData } from "@/models/emails";
 import {
   ArtistOfTheWeekModal,
   DjsOfTheWeekModal,
@@ -15,11 +19,12 @@ import { revalidatePath } from "next/cache";
 //////////////////////////////////////////// for articles
 
 export const getArticleById = async (
-  id: string
+  id: string,
+  token: string
 ): Promise<{
   isLoading: boolean;
   error: { message: string; err: unknown } | null;
-  data: ArticleModel | null;
+  data: Article | null;
 }> => {
   let isLoading: boolean = true;
   let error: { message: string; err: unknown } | null = null;
@@ -27,7 +32,12 @@ export const getArticleById = async (
 
   try {
     response = await axios.get(
-      `${process.env.NEXT_PUBLIC_SERVER_API_BASE_URL}/api/article/get-articleById/${id}`
+      `${process.env.NEXT_PUBLIC_SERVER_API_BASE_URL}/api/article/get-articleById/${id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
     );
   } catch (err) {
     error = { message: "something went wrong", err };
@@ -39,6 +49,8 @@ export const getArticleById = async (
 };
 
 export const updateArticle = async (
+  articleId: string,
+  token: string,
   existingFormData: FormData
 ): Promise<{
   isLoading: boolean;
@@ -51,10 +63,12 @@ export const updateArticle = async (
 
   try {
     response = await axios.put(
-      `${process.env.NEXT_PUBLIC_SERVER_API_BASE_URL}/api/article/update-article`,
+      `${process.env.NEXT_PUBLIC_SERVER_API_BASE_URL}/api/article/update-article/${articleId}`,
       existingFormData,
       {
-        headers: {},
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
         method: "PUT",
       }
     );
@@ -70,7 +84,8 @@ export const updateArticle = async (
 };
 
 export const deleteArticle = async (
-  id: string
+  id: string,
+  token: string
 ): Promise<{
   isLoading: boolean;
   error: { message: string; err: unknown } | null;
@@ -82,7 +97,12 @@ export const deleteArticle = async (
 
   try {
     response = await axios.delete(
-      `${process.env.NEXT_PUBLIC_SERVER_API_BASE_URL}/api/article/delete-article/${id}`
+      `${process.env.NEXT_PUBLIC_SERVER_API_BASE_URL}/api/article/delete-article/${id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
     );
   } catch (err) {
     error = { message: "something went wrong", err };
@@ -93,6 +113,103 @@ export const deleteArticle = async (
   revalidatePath("/dashboard/articles");
 
   return { isLoading, error, data: response?.data };
+};
+
+export const softDeleteArticle = async (
+  id: string,
+  token: string
+): Promise<{
+  isLoading: boolean;
+  error: { message: string; err: unknown } | null;
+  data: ArticleModel | null;
+}> => {
+  let isLoading: boolean = true;
+  let error: { message: string; err: unknown } | null = null;
+  let response: AxiosResponse<any, any> | null = null;
+
+  try {
+    response = await axios.delete(
+      `${process.env.NEXT_PUBLIC_SERVER_API_BASE_URL}/api/article/soft-delete-article/${id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  } catch (err) {
+    error = { message: "something went wrong", err };
+  } finally {
+    isLoading = false;
+  }
+
+  revalidatePath("/dashboard/articles");
+
+  return { isLoading, error, data: response?.data };
+};
+
+export const restoreArticle = async (
+  id: string,
+  token: string
+): Promise<{
+  isLoading: boolean;
+  error: { message: string; err: unknown } | null;
+  data: { message: string };
+}> => {
+  let isLoading: boolean = true;
+  let error: { message: string; err: unknown } | null = null;
+  let response: AxiosResponse<any, any> | null = null;
+
+  try {
+    response = await axios.put(
+      `${process.env.NEXT_PUBLIC_SERVER_API_BASE_URL}/api/article/restore-article/${id}`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  } catch (err) {
+    error = { message: "something went wrong", err };
+  } finally {
+    isLoading = false;
+  }
+
+  revalidatePath("/dashboard/articles");
+
+  return { isLoading, error, data: response?.data };
+};
+
+export const articleReSchedule = async (
+  id: string,
+  token: string,
+  body: {
+    scheduledDate: string;
+  }
+): Promise<{
+  error: { message: string; err: unknown } | null;
+  data: { message: string };
+}> => {
+  let error: { message: string; err: unknown } | null = null;
+  let response: AxiosResponse<any, any> | null = null;
+
+  try {
+    response = await axios.put(
+      `${process.env.NEXT_PUBLIC_SERVER_API_BASE_URL}/api/article/article-scheduledtime-update/${id}`,
+      body,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  } catch (err) {
+    error = { message: "something went wrong", err };
+  }
+
+  revalidatePath("/dashboard/articles?status=scheduled");
+
+  return { error, data: response?.data };
 };
 
 //////////////////////////////////////////// for categories
@@ -194,7 +311,7 @@ export const createUserForAdmin = async (
 
   try {
     response = await axios.post(
-      `${process.env.NEXT_PUBLIC_SERVER_API_BASE_URL}/api/auth/sign-up`,
+      `${process.env.NEXT_PUBLIC_SERVER_API_BASE_URL}/api/auth/create-user`,
       newUserFormData,
       { headers: { Authorization: `Bearer ${accessTokenForServer}` } }
     );
@@ -351,6 +468,93 @@ export const removeUserEditPermissionForSpecificArticleAction = async (
   return { isLoading, data: response?.data, error };
 };
 
+export const deleteUserAction = async (
+  accessTokenForServer: string,
+  userId: string
+): Promise<{
+  isLoading: boolean;
+  data: { message: string };
+  error: { message: string | null } | null;
+}> => {
+  let isLoading: boolean = true;
+  let error: { message: string | null } | null = null;
+  let response: AxiosResponse<any, any> | null = null;
+
+  try {
+    response = await axios.delete(
+      `${process.env.NEXT_PUBLIC_SERVER_API_BASE_URL}/api/users/delete-user/${userId}`,
+      { headers: { Authorization: `Bearer ${accessTokenForServer}` } }
+    );
+  } catch (err: any) {
+    error = {
+      message: err.response?.data?.message || "something went wrong",
+    };
+  }
+
+  revalidatePath("/dashboard/users");
+
+  return { isLoading, data: response?.data, error };
+};
+
+export const changePassword = async (
+  accessTokenForServer: string,
+  changePasswordData: {
+    old_password: string;
+    new_password: string;
+  }
+): Promise<{
+  isLoading: boolean;
+  data: { message: string };
+  error: { message: string | null } | null;
+}> => {
+  let isLoading: boolean = true;
+  let error: { message: string | null } | null = null;
+  let response: AxiosResponse<any, any> | null = null;
+
+  try {
+    response = await axios.put(
+      `${process.env.NEXT_PUBLIC_SERVER_API_BASE_URL}/api/users/change-password`,
+      changePasswordData,
+      { headers: { Authorization: `Bearer ${accessTokenForServer}` } }
+    );
+  } catch (err: any) {
+    error = {
+      message: err.response?.data?.message || "something went wrong",
+    };
+  }
+
+  return { isLoading, data: response?.data, error };
+};
+
+export const updateProfile = async (
+  accessTokenForServer: string,
+  profileData: {
+    user_name: string;
+  }
+): Promise<{
+  isLoading: boolean;
+  data: { message: string };
+  error: { message: string | null } | null;
+}> => {
+  let isLoading: boolean = true;
+  let error: { message: string | null } | null = null;
+  let response: AxiosResponse<any, any> | null = null;
+
+  try {
+    response = await axios.put(
+      `${process.env.NEXT_PUBLIC_SERVER_API_BASE_URL}/api/users/update-profile`,
+      profileData,
+      { headers: { Authorization: `Bearer ${accessTokenForServer}` } }
+    );
+  } catch (err: any) {
+    error = {
+      message: err.response?.data?.message || "something went wrong",
+    };
+  }
+
+  return { isLoading, data: response?.data, error };
+};
+
 ////////////////////////////////////FOR SHOWCASES
 
 export const addSongOfTheWeekAction = async (
@@ -366,7 +570,7 @@ export const addSongOfTheWeekAction = async (
   let response: AxiosResponse<any, any> | null = null;
 
   try {
-    response = await axios.put(
+    response = await axios.post(
       `${process.env.NEXT_PUBLIC_SERVER_API_BASE_URL}/api/showcases/add-songs-of-the-week/${articleId}`,
       "",
       { headers: { Authorization: `Bearer ${accessTokenForServer}` } }
@@ -394,7 +598,7 @@ export const addArtistOfTheWeekAction = async (
   let response: AxiosResponse<any, any> | null = null;
 
   try {
-    response = await axios.put(
+    response = await axios.post(
       `${process.env.NEXT_PUBLIC_SERVER_API_BASE_URL}/api/showcases/add-artist-of-the-week/${articleId}`,
       "",
       { headers: { Authorization: `Bearer ${accessTokenForServer}` } }
@@ -423,7 +627,7 @@ export const addDjsOfTheWeekAction = async (
   let response: AxiosResponse<any, any> | null = null;
 
   try {
-    response = await axios.put(
+    response = await axios.post(
       `${process.env.NEXT_PUBLIC_SERVER_API_BASE_URL}/api/showcases/add-dj-of-the-week/${articleId}/${djPositioningNumber}`,
       "",
       { headers: { Authorization: `Bearer ${accessTokenForServer}` } }
@@ -460,7 +664,7 @@ export const getSongsoFTheWeek = async (): Promise<{
   return { isLoading, data: response?.data, error };
 };
 
-export const getArtistsoFTheWeek = async (): Promise<{
+export const getArtistsOfTheWeek = async (): Promise<{
   isLoading: boolean;
   data: { message: string; allArtistsOfTheWeek: ArtistOfTheWeekModal[] | null };
   error: { message: string | null } | null;
@@ -532,7 +736,7 @@ export const deleteDjsoFTheWeek = async (
   return { isLoading, data: response?.data, error };
 };
 
-export const deleteArtistsoFTheWeek = async (
+export const deleteArtistsOfTheWeek = async (
   articleId: string,
   tokenToTheServer: string
 ): Promise<{
@@ -562,21 +766,19 @@ export const deleteArtistsoFTheWeek = async (
   return { isLoading, data: response?.data, error };
 };
 
-export const deleteSongssoFTheWeek = async (
+export const deleteSongsOfTheWeek = async (
   articleId: string,
   tokenToTheServer: string
 ): Promise<{
-  isLoading: boolean;
   data: { message: string };
   error: { message: string | null } | null;
 }> => {
-  let isLoading: boolean = true;
   let error: { message: string | null } | null = null;
   let response: AxiosResponse<any, any> | null = null;
 
   try {
     response = await axios.delete(
-      `${process.env.NEXT_PUBLIC_SERVER_API_BASE_URL}/api/showcases/delete-add-songs-of-the-week/${articleId}`,
+      `${process.env.NEXT_PUBLIC_SERVER_API_BASE_URL}/api/showcases/delete-songs-of-the-week/${articleId}`,
       {
         headers: {
           Authorization: `Bearer ${tokenToTheServer}`,
@@ -589,10 +791,10 @@ export const deleteSongssoFTheWeek = async (
     };
   }
   revalidatePath("/dashboard/showcases");
-  return { isLoading, data: response?.data, error };
+  return { data: response?.data, error };
 };
 
-export const updateLandingCards = async (
+export const createLandingCards = async (
   articleId: string,
   accessTokenForServer: string,
   title: string,
@@ -607,9 +809,41 @@ export const updateLandingCards = async (
   let response: AxiosResponse<any, any> | null = null;
 
   try {
-    response = await axios.put(
-      `${process.env.NEXT_PUBLIC_SERVER_API_BASE_URL}/api/showcases/update-landing-cards`,
+    response = await axios.post(
+      `${process.env.NEXT_PUBLIC_SERVER_API_BASE_URL}/api/showcases/create-landing-cards`,
       { articleId, title, categoryTitle },
+      { headers: { Authorization: `Bearer ${accessTokenForServer}` } }
+    );
+  } catch (err: any) {
+    error = {
+      message: err.response?.data?.message || "something went wrong",
+    };
+  }
+
+  revalidatePath("/dashboard/articles");
+
+  return {
+    isLoading,
+    data: { message: response?.data.message, status: response?.status },
+    error,
+  };
+};
+
+export const deleteLandingCards = async (
+  articleId: string,
+  accessTokenForServer: string
+): Promise<{
+  isLoading: boolean;
+  data: { message: string; status: number | undefined };
+  error: { message: string | null } | null;
+}> => {
+  let isLoading: boolean = true;
+  let error: { message: string | null } | null = null;
+  let response: AxiosResponse<any, any> | null = null;
+
+  try {
+    response = await axios.delete(
+      `${process.env.NEXT_PUBLIC_SERVER_API_BASE_URL}/api/showcases/delete-landing-card/${articleId}`,
       { headers: { Authorization: `Bearer ${accessTokenForServer}` } }
     );
   } catch (err: any) {
@@ -663,30 +897,6 @@ export const searchArticleOrWriter = async (
 
 //////////////////////////// DASHBOARD MATRICES
 
-export const getShowCasesMatrics = async (): Promise<{
-  isLoading: boolean;
-  data: {
-    message: string;
-    allShowCasesMatrics: { _id: string; showcasesCount: number }[] | null;
-  };
-  error: { message: string | null } | null;
-}> => {
-  let isLoading: boolean = true;
-  let error: { message: string | null } | null = null;
-  let response: AxiosResponse<any, any> | null = null;
-
-  try {
-    response = await axios.get(
-      `${process.env.NEXT_PUBLIC_SERVER_API_BASE_URL}/api/dash-metrics/get-showcases-metrics`
-    );
-  } catch (err: any) {
-    error = {
-      message: err.response?.data?.message || "something went wrong",
-    };
-  }
-  return { isLoading, data: response?.data, error };
-};
-
 export const getCategoryMatrics = async (): Promise<{
   isLoading: boolean;
   data: {
@@ -714,39 +924,37 @@ export const getCategoryMatrics = async (): Promise<{
   return { isLoading, data: response?.data, error };
 };
 
-export const getUsersMatrics = async (): Promise<{
-  isLoading: boolean;
+export const getDashboardCards = async (): Promise<{
   data: {
     message: string;
-    allUserMatrics:
-      | {
-          _id: number;
-          number: number;
-        }[]
-      | null;
+    data: {
+      userCount: number;
+      publishedArticles: number;
+      pendingArticles: number;
+      scheduledArticles: number;
+    } | null;
   };
   error: { message: string | null } | null;
 }> => {
-  let isLoading: boolean = true;
   let error: { message: string | null } | null = null;
   let response: AxiosResponse<any, any> | null = null;
 
   try {
     response = await axios.get(
-      `${process.env.NEXT_PUBLIC_SERVER_API_BASE_URL}/api/dash-metrics/get-user-metrics`
+      `${process.env.NEXT_PUBLIC_SERVER_API_BASE_URL}/api/dash-metrics/get-dashboard-cards`
     );
   } catch (err: any) {
     error = {
       message: err.response?.data?.message || "something went wrong",
     };
   }
-  return { isLoading, data: response?.data, error };
+  return { data: response?.data, error };
 };
-
-//////////////////////////////////sending email action
+///////////////////////////////// email action
 
 export const sendEmailAction = async (
-  emailDatas: MailData
+  emailDatas: MailData,
+  token: string
 ): Promise<{
   isLoading: boolean;
   data: {
@@ -762,7 +970,12 @@ export const sendEmailAction = async (
   try {
     response = await axios.post(
       `${process.env.NEXT_PUBLIC_SERVER_API_BASE_URL}/api/newsletter/send-email-to-newsletter-subscribers`,
-      emailDatas
+      emailDatas,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
     );
   } catch (err: any) {
     error = {
@@ -772,6 +985,43 @@ export const sendEmailAction = async (
   return {
     isLoading,
     data: { message: response?.data.message, status: response?.status },
+    error,
+  };
+};
+
+export const listEmailAction = async ({
+  token,
+}: {
+  token: string;
+}): Promise<{
+  isLoading: boolean;
+  data: {
+    message: string;
+    emails: EmailLists[];
+  };
+  error: { message: string | null } | null;
+}> => {
+  let isLoading: boolean = true;
+  let error: { message: string | null } | null = null;
+  let response: AxiosResponse<any, any> | null = null;
+
+  try {
+    response = await axios.get(
+      `${process.env.NEXT_PUBLIC_SERVER_API_BASE_URL}/api/newsletter/list-emails`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  } catch (err: any) {
+    error = {
+      message: err.response?.data?.message || "something went wrong",
+    };
+  }
+  return {
+    isLoading,
+    data: { message: response?.data.message, emails: response?.data.emails },
     error,
   };
 };

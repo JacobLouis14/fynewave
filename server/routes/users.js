@@ -6,10 +6,14 @@ const {
   assignArticleToEdit,
   deleteArticleFromEditPermission,
   getArticleAndWriterByEmail,
+  deleteUser,
+  changePasswordController,
+  updateProfileController,
 } = require("../controllers/users");
 const {
   checkIsAuthorized,
   checkIsAdmin,
+  checkIsSuperAdmin,
 } = require("../middlewares/isAuthorized");
 const router = express.Router();
 
@@ -41,12 +45,32 @@ router.put(
 router.get("/get-article-and-user-by-name", getArticleAndWriterByEmail);
 
 // asign article edit permission
-router.put("/create-edit-permission-for-article", assignArticleToEdit);
+router.put(
+  "/create-edit-permission-for-article",
+  checkIsAuthorized,
+  checkIsAdmin,
+  assignArticleToEdit
+);
 
 // remove article edit permission
 router.delete(
   "/remove-article-edit-premission/:articleId/:userId",
+  checkIsAuthorized,
+  checkIsAdmin,
   deleteArticleFromEditPermission
 );
+
+// delete user
+router.delete(
+  "/delete-user/:userId",
+  checkIsAuthorized,
+  checkIsSuperAdmin,
+  deleteUser
+);
+
+// change password
+router.put("/change-password", checkIsAuthorized, changePasswordController);
+// change profile data
+router.put("/update-profile", checkIsAuthorized, updateProfileController);
 
 module.exports = router;

@@ -9,7 +9,12 @@ async function Login() {
 
   // redirect if session  exits
   if (sessionData?.user) {
-    redirect("/dashboard");
+    const role = sessionData.user.role;
+    if (role != "super_admin" && role != "admin") {
+      redirect("/dashboard/articles");
+    } else {
+      redirect("/dashboard");
+    }
   }
 
   return (

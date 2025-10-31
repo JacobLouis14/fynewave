@@ -15,12 +15,12 @@ const Artistofweek = async () => {
     allArtistOfTheWeekData.allArtistsOfTheWeek &&
     allArtistOfTheWeekData.allArtistsOfTheWeek.length < 1
   ) {
-    return <p className="text-center h-36">No Artist of the week</p>;
+    return null;
   }
 
   return (
     <div className="pb-10 pt-5 px-3">
-      <h2 className="text-center font-raleway font-semibold text-4xl">
+      <h2 className="text-center font-raleway font-bold text-4xl">
         Check Them Out!!!{/* Artists of the Week */}
       </h2>
       {/* content -> card Caurosel */}

@@ -1,45 +1,63 @@
 "use client";
-import { signOut } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React from "react";
+import LogoutBtn from "./logoutBtn";
 
 interface SidebarMenuList {
   title: string;
   link: string;
+  roles: string[];
 }
 
 interface Props {
   sidebarCloseHandler?: Function;
+  userRole: string;
 }
 
-const Sidebarlist = ({ sidebarCloseHandler }: Props) => {
+const Sidebarlist = ({ userRole }: Props) => {
   const pathname = usePathname();
   const menuListData: SidebarMenuList[] = [
-    { title: "Dashboard", link: "/dashboard" },
-    { title: "Articles", link: "/dashboard/articles" },
-    { title: "Categories", link: "/dashboard/categories" },
-    { title: "Users", link: "/dashboard/users" },
-    { title: "Emails", link: "/dashboard/emails" },
+    { title: "Dashboard", link: "/dashboard", roles: ["super_admin", "admin"] },
+    {
+      title: "Articles",
+      link: "/dashboard/articles?status=published",
+      roles: ["super_admin", "admin", "content_writer"],
+    },
+    {
+      title: "Categories",
+      link: "/dashboard/categories",
+      roles: ["super_admin", "admin"],
+    },
+    {
+      title: "Users",
+      link: "/dashboard/users",
+      roles: ["super_admin", "admin"],
+    },
+    { title: "Emails", link: "/dashboard/emails", roles: ["super_admin"] },
   ];
 
-  const selectedMenuIndex = menuListData.findIndex(
-    (menu) => menu.link === pathname
+  const roleBasedMenu = menuListData.filter((menu) =>
+    menu.roles.includes(userRole)
   );
 
-  // logout handler
-  const handlerLogout = () => {
-    signOut({ redirect: true, callbackUrl: "/" });
+  const isMenuSelected = (menu: string) => {
+    const menuInSmallcase = menu.toLowerCase();
+    const splitedPathname = pathname.split("/");
+
+    const selectedMenu = splitedPathname[2] || splitedPathname[1];
+
+    return menuInSmallcase === selectedMenu;
   };
 
   return (
-    <div className="flex flex-col items-center h-full md:justify-between pt-20 gap-5">
+    <div className="flex flex-col items-center h-full md:justify-between pt-6 pb-3 px-3 gap-5">
       <ul className="flex flex-col gap-3 w-2/3 md:w-full">
-        {menuListData.map((list, index) => (
+        {roleBasedMenu.map((list, index) => (
           <Link href={list.link} key={index}>
             <li
               className={`${
-                selectedMenuIndex === index
+                isMenuSelected(list.title)
                   ? "bg-darkRed text-white"
                   : "bg-gray-200"
               } px-3 py-2 rounded-lg hover:bg-darkRed hover:text-white hover:cursor-pointer`}
@@ -49,12 +67,7 @@ const Sidebarlist = ({ sidebarCloseHandler }: Props) => {
           </Link>
         ))}
       </ul>
-      <button
-        onClick={handlerLogout}
-        className="px-3 py-2 mt-16 md:mt-0 bg-gray-200 rounded-lg w-2/3 md:w-full hover:bg-darkRed hover:text-white text-start"
-      >
-        Logout
-      </button>
+      <LogoutBtn />
     </div>
   );
 };

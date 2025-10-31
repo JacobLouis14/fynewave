@@ -2,7 +2,7 @@
 import { LoginFormData } from "@/models/auth";
 import { signIn, useSession } from "next-auth/react";
 import { redirect, RedirectType, useRouter } from "next/navigation";
-import React, { FormEvent, useState } from "react";
+import React, { FormEvent, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 
 const LoginForm = () => {
@@ -11,39 +11,58 @@ const LoginForm = () => {
     password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState<boolean>(false);
   const { data: session, status } = useSession();
   const router = useRouter();
 
   // login btn handler
   const loginBtnHandler = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    // validation
-    const { email, password } = loginData;
-    if (!email || !password) {
-      toast.error("Enter valid data");
-      return;
-    }
-    // actions
-    const result = await signIn("credentials", {
-      redirect: false,
-      email: loginData.email,
-      password: loginData.password,
-    });
-    // console.log(result);
+    try {
+      e.preventDefault();
 
-    // if (result?.status === 401) {
-    //   toast.warning("check internet : not found");
-    // } else
-    if (result?.error) {
-      toast.error(result.error);
-    } else if (
-      result?.status &&
-      result?.status >= 200 &&
-      result?.status < 300
-    ) {
-      router.replace("/dashboard");
+      // validation
+      const { email, password } = loginData;
+      if (!email || !password) {
+        toast.error("Enter valid data");
+        return;
+      }
+
+      !loading && setLoading(true);
+
+      // actions
+      const result = await signIn("credentials", {
+        redirect: false,
+        email: loginData.email,
+        password: loginData.password,
+      });
+      // console.log(result);
+
+      // if (result?.status === 401) {
+      //   toast.warning("check internet : not found");
+      // } else
+      if (result?.error) {
+        toast.error(result.error);
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error("something went wrong");
+    } finally {
+      setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (session) {
+      const role = session.user.role;
+      const isAdmin = role == "super_admin" || role == "admin";
+
+      if (isAdmin) {
+        redirect("/dashboard");
+      } else {
+        redirect("/dashboard/articles?status=published");
+      }
+    }
+  }, [session]);
 
   return (
     <form
@@ -84,8 +103,9 @@ const LoginForm = () => {
         <button
           type="submit"
           className="px-5 py-2 bg-white text-lightRed rounded-lg hover:font-bold"
+          disabled={loading}
         >
-          login
+          {loading ? "please wait" : "login"}
         </button>
       </div>
     </form>

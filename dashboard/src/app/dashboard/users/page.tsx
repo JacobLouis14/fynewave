@@ -15,14 +15,18 @@ const Users = async () => {
   if (!session?.user) redirect("/");
 
   // access only for admins
-  if (session.user.role != 0) {
+  if (session.user.role != "super_admin" && session.user.role != "admin") {
     return <div className="w-full text-center">Access Restricted</div>;
   }
 
   return (
-    <div className="px-5 py-12 grid grid-rows-1 grid-cols-1 md:grid-cols-7 gap-5">
+    <div className="px-5 py-8 grid grid-rows-2 md:grid-rows-1 grid-cols-1 md:grid-cols-7 gap-5 h-[88vh] overflow-auto">
       <div className="md:col-span-5 overflow-x-scroll">
-        <UserTables userData={userData} />
+        <UserTables
+          userData={userData}
+          role={session.user.role}
+          currentUserId={session.user.id}
+        />
       </div>
       <div className="md:col-span-2 flex flex-col gap-7">
         <div className="flex flex-col gap-7">

@@ -4,4 +4,10 @@ export interface MailData {
     content: string;
   };
   extraEmailsToSend: string[] | [];
+  excludedMails: string[];
+}
+
+export interface EmailLists {
+  _id: string;
+  email: string;
 }

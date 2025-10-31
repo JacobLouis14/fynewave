@@ -1,6 +1,5 @@
 const articleModel = require("../models/article");
 const categoryModel = require("../models/catergory");
-const ShowCasesModel = require("../models/showcases");
 const userModel = require("../models/user");
 
 const getCategoryMetrics = async (req, res) => {
@@ -30,46 +29,34 @@ const getCategoryMetrics = async (req, res) => {
   }
 };
 
-const getShowcasesMetrics = async (req, res) => {
+const dashboardCard = async (req, res) => {
   try {
-    const allShowCasesMatrics = await ShowCasesModel.aggregate([
-      {
-        $group: {
-          _id: "$title",
-          showcasesCount: { $sum: { $size: "$articleIds" } },
-        },
-      },
-    ]);
-    res.status(200).json({
-      message: "Success",
-      allShowCasesMatrics,
+    const userCount = await userModel.countDocuments();
+    const publishedArticles = await articleModel.countDocuments({
+      status: "published",
     });
-  } catch (error) {
-    res.status(500).json({ message: "Server Error", error });
-  }
-};
+    const pendingArticles = await articleModel.countDocuments({
+      status: "pending",
+    });
+    const scheduledArticles = await articleModel.countDocuments({
+      status: "scheduled",
+    });
 
-const getUsersMetrics = async (req, res) => {
-  try {
-    const allUserMatrics = await userModel.aggregate([
-      {
-        $group: {
-          _id: "$role",
-          number: { $sum: 1 },
-        },
-      },
-    ]);
     res.status(200).json({
-      message: "Success",
-      allUserMatrics,
+      message: "sucess",
+      data: {
+        userCount,
+        publishedArticles,
+        pendingArticles,
+        scheduledArticles,
+      },
     });
   } catch (error) {
-    res.status(500).json({ message: "Server Error", error });
+    res.status(500).json({ message: "server error" });
   }
 };
 
 module.exports = {
   getCategoryMetrics,
-  getShowcasesMetrics,
-  getUsersMetrics,
+  dashboardCard,
 };

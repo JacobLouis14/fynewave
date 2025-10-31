@@ -5,6 +5,7 @@ const multer = require("multer");
 const {
   checkIsAuthorized,
   checkIsAdmin,
+  checkIsSuperAdmin,
 } = require("../middlewares/isAuthorized");
 
 const upload = multer({
@@ -16,9 +17,9 @@ router.post("/sign-in", upload.none(), signInHandler);
 
 // admin create user route handler
 router.post(
-  "/sign-up",
+  "/create-user",
   checkIsAuthorized,
-  checkIsAdmin,
+  checkIsSuperAdmin,
   upload.none(),
   signUpHandler
 );

@@ -1,5 +1,6 @@
 const articleModel = require("../models/article");
 const userModel = require("../models/user");
+const { hashCompare, hashHandler } = require("../utils/hasing");
 
 const allUsersDataHandler = async (req, res) => {
   try {
@@ -11,7 +12,7 @@ const allUsersDataHandler = async (req, res) => {
     const allUserData = await userModel.aggregate([
       {
         $match: {
-          role: { $in: [0, 1] },
+          role: { $in: ["super_admin", "admin", "content_writer"] },
         },
       },
       {
@@ -38,6 +39,11 @@ const allUsersDataHandler = async (req, res) => {
               },
             },
           ],
+        },
+      },
+      {
+        $sort: {
+          role: 1,
         },
       },
     ]);
@@ -116,7 +122,7 @@ const getArticleAndWriterByEmail = async (req, res) => {
       allContentWriterEmail = await userModel.find(
         {
           $and: [
-            { role: 1 },
+            { role: "content_writer" },
             { email: { $regex: contentWriterEmail, $options: "i" } },
           ],
         },
@@ -127,7 +133,10 @@ const getArticleAndWriterByEmail = async (req, res) => {
     if (articleTitle) {
       allArticles = await articleModel
         .find(
-          { title: { $regex: articleTitle, $options: "i" } },
+          {
+            title: { $regex: articleTitle, $options: "i" },
+            status: "published",
+          },
           { _id: 1, title: 1 }
         )
         .lean();
@@ -149,7 +158,7 @@ const assignArticleToEdit = async (req, res) => {
     const isUserExists = await userModel.findById(userId);
     const isArticleExists = await articleModel.findById(articleId);
 
-    if (!isUserExists || isUserExists.role != 1) {
+    if (!isUserExists) {
       return res.status(400).json({ message: "User not found" });
     }
 
@@ -176,7 +185,7 @@ const deleteArticleFromEditPermission = async (req, res) => {
     const isUserExists = await userModel.findById(userId);
     const isArticleExists = await articleModel.findById(articleId);
 
-    if (!isUserExists || isUserExists.role != 1) {
+    if (!isUserExists) {
       return res.status(400).json({ message: "User not found" });
     }
 
@@ -195,6 +204,70 @@ const deleteArticleFromEditPermission = async (req, res) => {
   }
 };
 
+// delete user
+const deleteUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    await userModel.findByIdAndDelete(userId);
+    res.status(200).json({ message: "delete successfull" });
+  } catch (error) {
+    res.status(500).json({ message: "Server Error", error });
+  }
+};
+
+// change password
+const changePasswordController = async (req, res) => {
+  try {
+    const { new_password, old_password } = req.body;
+    const { userId } = req.user;
+
+    if (!new_password || !old_password) {
+      return res.status(400).json({ message: "bad request" });
+    }
+
+    const user = await userModel.findById(userId);
+
+    const isCredentialCorrect = await hashCompare(old_password, user.password);
+
+    if (!isCredentialCorrect) {
+      return res.status(400).json({ message: "Invalid credential" });
+    }
+
+    const hashedpassword = await hashHandler(new_password);
+
+    await userModel.findByIdAndUpdate(userId, {
+      password: hashedpassword,
+    });
+    res.status(200).json({ message: "updation successfull" });
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({ message: "server error" });
+  }
+};
+
+// change username
+const updateProfileController = async (req, res) => {
+  try {
+    const { user_name } = req.body;
+    const { userId } = req.user;
+
+    if (!user_name) {
+      return res.status(400).json({ message: "bad request" });
+    }
+
+    await userModel.findByIdAndUpdate(userId, {
+      name: user_name,
+    });
+    res.status(200).json({ message: "updation successfull" });
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({ message: "server error" });
+  }
+};
+
 module.exports = {
   allUsersDataHandler,
   suspendUserController,
@@ -202,4 +275,7 @@ module.exports = {
   getArticleAndWriterByEmail,
   assignArticleToEdit,
   deleteArticleFromEditPermission,
+  deleteUser,
+  changePasswordController,
+  updateProfileController,
 };

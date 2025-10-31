@@ -6,7 +6,7 @@ export const api = createApi({
     baseUrl: baseUrl,
   }),
   reducerPath: "api",
-  tagTypes: [],
+  tagTypes: ["Article"],
   endpoints: (build) => ({
     setUserLogin: build.mutation({
       query: (loginData) => ({
@@ -16,15 +16,48 @@ export const api = createApi({
       }),
     }),
     addNewArticleApi: build.mutation({
-      query: (articleFormData: FormData) => {
+      query: ({
+        articleFormData,
+        accessToken,
+      }: {
+        articleFormData: FormData;
+        accessToken: string;
+      }) => {
         return {
           url: "/api/article/add-new-article",
           method: "POST",
           body: articleFormData,
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
         };
       },
+      invalidatesTags: ["Article"],
+    }),
+    saveArticleAsDraft: build.mutation({
+      query: ({
+        articleFormData,
+        accessToken,
+      }: {
+        articleFormData: FormData;
+        accessToken: string;
+      }) => {
+        return {
+          url: "/api/article/save-article-as-draft",
+          method: "POST",
+          body: articleFormData,
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        };
+      },
+      invalidatesTags: ["Article"],
     }),
   }),
 });
 
-export const { useSetUserLoginMutation, useAddNewArticleApiMutation } = api;
+export const {
+  useSetUserLoginMutation,
+  useAddNewArticleApiMutation,
+  useSaveArticleAsDraftMutation,
+} = api;

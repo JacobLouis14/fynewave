@@ -11,7 +11,7 @@ const SignupForm = () => {
     name: "",
     email: "",
     password: "",
-    role: 1,
+    role: "content_writer",
   });
   const { pending } = useFormStatus();
   const { data: session } = useSession();
@@ -46,7 +46,7 @@ const SignupForm = () => {
         name: "",
         email: "",
         password: "",
-        role: 1,
+        role: "content_writer",
       });
     }
   };
@@ -91,9 +91,9 @@ const SignupForm = () => {
           type="radio"
           name="userRole"
           id="admin"
-          value="0"
-          checked={newUserData.role === 0}
-          onChange={() => setNewUserData({ ...newUserData, role: 0 })}
+          value="admin"
+          checked={newUserData.role === "admin"}
+          onChange={() => setNewUserData({ ...newUserData, role: "admin" })}
         />
         <label htmlFor="admin">Admin</label>
       </div>
@@ -102,9 +102,11 @@ const SignupForm = () => {
           type="radio"
           name="userRole"
           id="content-writer"
-          value="1"
-          checked={newUserData.role === 1}
-          onChange={() => setNewUserData({ ...newUserData, role: 1 })}
+          value="content_writer"
+          checked={newUserData.role === "content_writer"}
+          onChange={() =>
+            setNewUserData({ ...newUserData, role: "content_writer" })
+          }
         />
         <label htmlFor="content-writer">Content-Writer</label>
       </div>

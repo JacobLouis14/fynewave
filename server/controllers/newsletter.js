@@ -1,30 +1,20 @@
+const { addToEmailQueue } = require("../jobs/email/emailSenderJob");
 const newsletterModal = require("../models/newsletter");
-const nodemailer = require("nodemailer");
-
-// nodemailer config
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: "info.lynchpinapp@gmail.com",
-    pass: process.env.GOOGLE_PASSKEY,
-  },
-});
 
 const addEmailToNewsletterController = async (req, res) => {
   try {
     const { email } = req.body;
 
     // is email exists validation and inputting
-    const updatedNewsletter = await newsletterModal.findOneAndUpdate(
-      { for: "newsletter" },
-      {
-        $addToSet: { emails: email },
-      },
-      {
-        new: true,
-        upsert: true,
-      }
-    );
+    const emailIsExists = newsletterModal.findOne({ email: email });
+
+    if (emailIsExists) {
+      return res.status(400).json({ message: "email already exists" });
+    }
+
+    await newsletterModal.create({
+      email: email,
+    });
 
     res.status(200).json({ message: "successfully added" });
   } catch (error) {
@@ -34,30 +24,22 @@ const addEmailToNewsletterController = async (req, res) => {
 
 const sendEmailController = async (req, res) => {
   try {
-    const { mailContent, extraEmailsToSend } = req.body;
+    const { mailContent, extraEmailsToSend, excludedMails } = req.body;
+    console.log(req.body);
 
-    let mailsToSend = [];
+    addToEmailQueue(mailContent, extraEmailsToSend, excludedMails);
 
-    const newsletterData = await newsletterModal.findOne({
-      for: "newsletter",
-    });
+    res.status(200).json({ message: "emails will shortly send" });
+  } catch (error) {
+    res.status(500).json({ message: "server error", error });
+  }
+};
 
-    mailsToSend = [...extraEmailsToSend, ...newsletterData.emails];
-
-    if (mailsToSend.length < 1)
-      return res.status(400).json({ message: "no mails to send" });
-
-    for (const mail of mailsToSend) {
-      const mailOptions = {
-        from: "info.lynchpinapp@gmail.com",
-        to: `${mail}`,
-        subject: `${mailContent.subject}`,
-        text: `${mailContent.content}`,
-      };
-
-      const transporterResponse = await transporter.sendMail(mailOptions);
-    }
-    res.status(200).json({ message: "mails sent successfully" });
+// list emails
+const listEmailController = async (req, res) => {
+  try {
+    const emails = await newsletterModal.find();
+    res.status(200).json({ message: "successfully", emails: emails });
   } catch (error) {
     res.status(500).json({ message: "server error", error });
   }
@@ -66,4 +48,5 @@ const sendEmailController = async (req, res) => {
 module.exports = {
   addEmailToNewsletterController,
   sendEmailController,
+  listEmailController,
 };

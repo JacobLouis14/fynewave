@@ -13,12 +13,12 @@ const Latestblogs = async () => {
     latestBlogData.latestArticles &&
     latestBlogData.latestArticles?.length < 1
   ) {
-    return <p>No latest blogs</p>;
+    return null;
   }
 
   return (
     <div className="pb-10  px-3">
-      <h2 className="text-center font-raleway font-semibold text-4xl">
+      <h2 className="text-center font-raleway font-bold text-4xl">
         {/* Latest blogs */}Hot Takes
       </h2>
       {/* content */}

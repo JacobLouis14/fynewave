@@ -29,7 +29,7 @@ const UserEditDataModal = ({ userData }: Props) => {
 
       const { data, error } =
         await removeUserEditPermissionForSpecificArticleAction(
-          sessionData?.user.id || "",
+          sessionData?.user.token || "",
           _id,
           articleId
         );
@@ -46,15 +46,15 @@ const UserEditDataModal = ({ userData }: Props) => {
   return (
     <>
       <button
-        className="bg-darkRed text-white py-2 rounded-md w-full"
+        className="bg-darkRed text-white py-1 rounded-md px-3"
         onClick={handleOpenModal}
       >
         edits
       </button>
 
       {isModalOpen && (
-        <div className="fixed top-0 left-0 w-full h-full bg-black/35 z-[60] flex justify-center items-center">
-          <div className="ms-10 w-[70%] h-[90%] bg-white relative">
+        <div className="fixed top-0 right-0 w-[82%] h-full bg-black/35 z-[60] flex justify-center items-center">
+          <div className="ms-10 w-[80%] h-[90%] bg-white relative">
             <button
               className="absolute -right-10 -top-8"
               onClick={handleCloseModal}

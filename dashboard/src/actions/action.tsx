@@ -2,39 +2,39 @@
 
 import axios from "axios";
 import HorizontalCards from "@/components/articles/horizontalCards";
-import { ArticleModel } from "@/models/article";
-import ArticlesRow from "@/components/articles/articlesRow";
+import { Article, ArticleModel } from "@/models/article";
 
 export const fetchArticles = async (
+  token: string,
   pageNumber: number,
+  status: string,
   searchValue?: string | null
 ): Promise<{
-  articles: React.JSX.Element[] | null;
-  isLoading: boolean;
+  articles: Article[];
   error: { message: string; err: unknown } | null;
 }> => {
   let searchQuery = searchValue ? `search=${searchValue}&` : "";
-  let loading: boolean = true;
   let error: { message: string; err: unknown } | null = null;
-  let articles: React.JSX.Element[] | null = null;
+  let articles: Article[] = [];
 
   try {
     const response = await axios.get(
       `${
         process.env.NEXT_PUBLIC_SERVER_API_BASE_URL
-      }/api/article/get-articles?${searchQuery}page=${pageNumber}&articlesPerPage=${10}`
+      }/api/article/get-articles?${searchQuery}page=${pageNumber}&articlesPerPage=${10}&status=${status}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
     );
 
     const { data } = response;
 
-    articles = data.map((article: Partial<ArticleModel>, index: number) => (
-      <ArticlesRow key={index} articleData={article} />
-    ));
+    articles = data.articles;
   } catch (err) {
     error = { message: "Something went wrong", err };
-  } finally {
-    loading = false;
   }
 
-  return { articles, isLoading: loading, error };
+  return { articles, error };
 };

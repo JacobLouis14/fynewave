@@ -1,101 +1,86 @@
 const { default: mongoose } = require("mongoose");
 const articleModel = require("../models/article");
-const ShowCasesModel = require("../models/showcases");
 const { getBucketImageUrl } = require("../utils/aws_s3");
+const FeaturedSongsModel = require("../models/featuredSongs");
+const CheckThemOutModel = require("../models/checkThemOut");
+const OnSpotLightModel = require("../models/onSpotLight");
+const LandingModel = require("../models/landing");
 
 //////////////////////////////////songs of the week
 
 const getAllSongsOfTheWeek = async (req, res) => {
   try {
-    const allSongsOfTheWeekIds = await ShowCasesModel.findOne({
-      title: "songs-of-the-week",
-    });
-
-    const articleData = await articleModel.find(
+    const articleData = await FeaturedSongsModel.aggregate([
       {
-        _id: { $in: allSongsOfTheWeekIds.articleIds },
+        $lookup: {
+          from: "articles",
+          localField: "article_id",
+          foreignField: "_id",
+          as: "articleData",
+          pipeline: [
+            {
+              $project: {
+                alternativeTitle: 1,
+                createdAt: 1,
+                thumbnail: 1,
+                slug: 1,
+                category: 1,
+              },
+            },
+          ],
+        },
       },
-      {},
-      { sort: { updatedAt: -1 } }
-    );
+      {
+        $unwind: "$articleData",
+      },
+    ]);
 
     for (let songsData of articleData) {
-      const thumbnail = await getBucketImageUrl(songsData.thumbnail);
-      songsData._doc.thumbnailUrl = thumbnail;
+      const thumbnail = await getBucketImageUrl(
+        songsData.articleData.thumbnail
+      );
+      songsData.articleData.thumbnailUrl = thumbnail;
     }
 
     res
       .status(200)
       .json({ message: "success", allSongsOfTheWeek: articleData });
   } catch (error) {
+    console.log(error);
+
     res.status(500).json({ message: "server error", error });
   }
 };
 
-const updateSongsOfTheWeekController = async (req, res) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
+const createSongsOfTheWeekController = async (req, res) => {
   try {
     const { articleId } = req.params;
 
-    //  validation
-    const isExists = await ShowCasesModel.findOne(
-      {
-        $and: [
-          { title: "songs-of-the-week" },
-          { articleIds: { $in: [articleId] } },
-        ],
-      },
-      {},
-      { upsert: true }
-    );
-    const isArticleExist = await articleModel.findById(articleId);
-
-    if (!isArticleExist) {
-      await session.abortTransaction();
-      return res.status(400).json({ message: "Article does not exists" });
-    }
-
-    if (!isExists) {
-      await ShowCasesModel.findOneAndUpdate(
-        {
-          title: "songs-of-the-week",
-        },
-        {
-          $push: {
-            articleIds: articleId,
-          },
-        },
-        { new: true, upsert: true }
-      );
-    }
-    if (isExists) {
-      await ShowCasesModel.findOneAndUpdate(
-        {
-          title: "songs-of-the-week",
-        },
-        {
-          $pull: {
-            articleIds: articleId,
-          },
-        },
-        { new: true, upsert: true }
-      );
-    }
-
-    await articleModel.findByIdAndUpdate(articleId, {
-      isSongOfTheWeek: !isArticleExist.isSongOfTheWeek,
+    const isArticleExistInFeaturedSongs = await FeaturedSongsModel.findOne({
+      article_id: articleId,
     });
 
-    await session.commitTransaction();
-    session.endSession();
+    if (isArticleExistInFeaturedSongs) {
+      return res.status(400).json({ message: "already exists" });
+    }
+
+    const isArticleExists = await articleModel.exists({ _id: articleId });
+
+    if (!isArticleExists) {
+      return res.status(400).json({ message: "Article not exists" });
+    }
+
+    const updateFeaturedSongs = FeaturedSongsModel.create({
+      article_id: articleId,
+    });
+    const articleUpdate = articleModel.findByIdAndUpdate(articleId, {
+      isSongOfTheWeek: true,
+    });
+    await Promise.all([updateFeaturedSongs, articleUpdate]);
 
     res.status(200).json({ message: "success" });
   } catch (error) {
     console.log(error);
-
-    await session.abortTransaction();
-    session.endSession();
     res.status(500).json({ message: "server error", error });
   }
 };
@@ -104,41 +89,27 @@ const deleteSongOfTheWeekController = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
-    const { articleId } = req.params;
+    const { id } = req.params;
 
-    //  validation
-    const isExists = await ShowCasesModel.findOne({
-      $and: [
-        { title: "songs-of-the-week" },
-        { articleIds: { $in: [articleId] } },
-      ],
-    });
-    const isArticleExist = await articleModel.findById(articleId);
+    const isExists = await FeaturedSongsModel.exists({ article_id: id });
 
     if (!isExists) {
-      await session.abortTransaction();
-      return res.status(400).json({ message: "Article don't exists" });
-    }
-    if (!isArticleExist) {
-      await session.abortTransaction();
-      return res.status(400).json({ message: "Article does not exists" });
+      return res.status(400).json({ message: "Article not in featured songs" });
     }
 
-    await new ShowCasesModel.findOneAndUpdate(
-      {
-        title: "songs-of-the-week",
-      },
-      {
-        $pull: {
-          articleIds: articleId,
-        },
-      },
-      { new: true }
+    const isArticleExists = await articleModel.exists({ _id: id });
+
+    if (!isArticleExists) {
+      return res.status(400).json({ message: "Article not exists" });
+    }
+
+    const updateFeaturedSongs = FeaturedSongsModel.findByIdAndDelete(
+      isExists._id
     );
-
-    await articleModel.findByIdAndUpdate(articleId, {
-      isSongOfTheWeek: !isArticleExist.isSongOfTheWeek,
+    const articleUpdate = articleModel.findByIdAndUpdate(id, {
+      isSongOfTheWeek: false,
     });
+    await Promise.all([updateFeaturedSongs, articleUpdate]);
 
     await session.commitTransaction();
     session.endSession();
@@ -154,21 +125,36 @@ const deleteSongOfTheWeekController = async (req, res) => {
 
 const getAllArtistOfTheWeek = async (req, res) => {
   try {
-    const allArtistOfTheWeekIds = await ShowCasesModel.findOne({
-      title: "artists-of-the-week",
-    });
-
-    const articleData = await articleModel.find(
+    const articleData = await CheckThemOutModel.aggregate([
       {
-        _id: { $in: allArtistOfTheWeekIds.articleIds },
+        $lookup: {
+          from: "articles",
+          localField: "article_id",
+          foreignField: "_id",
+          as: "articleData",
+          pipeline: [
+            {
+              $project: {
+                alternativeTitle: 1,
+                createdAt: 1,
+                thumbnail: 1,
+                slug: 1,
+                category: 1,
+              },
+            },
+          ],
+        },
       },
-      {},
-      { sort: { updatedAt: -1 } }
-    );
+      {
+        $unwind: "$articleData",
+      },
+    ]);
 
     for (let songsData of articleData) {
-      const thumbnail = await getBucketImageUrl(songsData.thumbnail);
-      songsData._doc.thumbnailUrl = thumbnail;
+      const thumbnail = await getBucketImageUrl(
+        songsData.articleData.thumbnail
+      );
+      songsData.articleData.thumbnailUrl = thumbnail;
     }
 
     res
@@ -179,60 +165,33 @@ const getAllArtistOfTheWeek = async (req, res) => {
   }
 };
 
-const updateArtistOfTheWeekController = async (req, res) => {
+const createArtistOfTheWeekController = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
     const { articleId } = req.params;
 
-    //  validation
-    const isExists = await ShowCasesModel.findOne(
-      {
-        $and: [
-          { title: "artists-of-the-week" },
-          { articleIds: { $in: [articleId] } },
-        ],
-      },
-      {},
-      { upsert: true }
-    );
-    const isArticleExist = await articleModel.findById(articleId);
-
-    if (!isArticleExist) {
-      await session.abortTransaction();
-      return res.status(400).json({ message: "Article does not exists" });
-    }
-
-    if (!isExists) {
-      await ShowCasesModel.findOneAndUpdate(
-        {
-          title: "artists-of-the-week",
-        },
-        {
-          $push: {
-            articleIds: articleId,
-          },
-        },
-        { new: true, upsert: true }
-      );
-    }
-    if (isExists) {
-      await ShowCasesModel.findOneAndUpdate(
-        {
-          title: "artists-of-the-week",
-        },
-        {
-          $pull: {
-            articleIds: articleId,
-          },
-        },
-        { new: true, upsert: true }
-      );
-    }
-
-    await articleModel.findByIdAndUpdate(articleId, {
-      isArtistOfTheWeek: !isArticleExist.isArtistOfTheWeek,
+    const isArticleExistInCheckThemOut = await CheckThemOutModel.exists({
+      article_id: articleId,
     });
+
+    if (isArticleExistInCheckThemOut) {
+      return res.status(400).json({ message: "already exists" });
+    }
+
+    const isArticleExists = await articleModel.exists({ _id: articleId });
+
+    if (!isArticleExists) {
+      return res.status(400).json({ message: "Article not exists" });
+    }
+
+    const updateCheckThemOut = CheckThemOutModel.create({
+      article_id: articleId,
+    });
+    const articleUpdate = articleModel.findByIdAndUpdate(articleId, {
+      isArtistOfTheWeek: true,
+    });
+    await Promise.all([updateCheckThemOut, articleUpdate]);
 
     await session.commitTransaction();
     session.endSession();
@@ -249,41 +208,27 @@ const deleteArtistOfTheWeekController = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
-    const { articleId } = req.params;
+    const { id } = req.params;
 
-    //  validation
-    const isExists = await ShowCasesModel.findOne({
-      $and: [
-        { title: "artists-of-the-week" },
-        { articleIds: { $in: [articleId] } },
-      ],
-    });
-    const isArticleExist = await articleModel.findById(articleId);
+    const isExists = await CheckThemOutModel.exists({ article_id: id });
 
     if (!isExists) {
-      await session.abortTransaction();
-      return res.status(400).json({ message: "Article don't exists" });
-    }
-    if (!isArticleExist) {
-      await session.abortTransaction();
-      return res.status(400).json({ message: "Article does not exists" });
+      return res.status(400).json({ message: "Article not in Check them out" });
     }
 
-    await new ShowCasesModel.findOneAndUpdate(
-      {
-        title: "artists-of-the-week",
-      },
-      {
-        $pull: {
-          articleIds: articleId,
-        },
-      },
-      { new: true }
+    const isArticleExists = await articleModel.exists({ _id: id });
+
+    if (!isArticleExists) {
+      return res.status(400).json({ message: "Article not exists" });
+    }
+
+    const updateCheckThemOut = CheckThemOutModel.findByIdAndDelete(
+      isExists._id
     );
-
-    await articleModel.findByIdAndUpdate(articleId, {
-      isArtistOfTheWeek: !isArticleExist.isArtistOfTheWeek,
+    const articleUpdate = articleModel.findByIdAndUpdate(id, {
+      isArtistOfTheWeek: false,
     });
+    await Promise.all([updateCheckThemOut, articleUpdate]);
 
     await session.commitTransaction();
     session.endSession();
@@ -299,43 +244,38 @@ const deleteArtistOfTheWeekController = async (req, res) => {
 
 const getAllDjsOfTheWeek = async (req, res) => {
   try {
-    const allDjsOfTheWeekIds = await ShowCasesModel.aggregate([
+    const articleData = await OnSpotLightModel.aggregate([
       {
-        $match: {
-          title: "djs-of-the-week",
+        $lookup: {
+          from: "articles",
+          localField: "article_id",
+          foreignField: "_id",
+          as: "articleData",
+          pipeline: [
+            {
+              $project: {
+                alternativeTitle: 1,
+                createdAt: 1,
+                thumbnail: 1,
+                slug: 1,
+                category: 1,
+              },
+            },
+          ],
         },
       },
       {
-        $unwind: "$articleIds",
-      },
-      {
-        $sort: {
-          "articleIds.position": 1,
-        },
-      },
-      {
-        $group: {
-          _id: "$_id",
-          title: { $first: "$title" },
-          articleIds: { $push: "$articleIds" },
-        },
+        $unwind: "$articleData",
       },
     ]);
 
-    const articleData = await articleModel.find(
-      {
-        _id: {
-          $in: allDjsOfTheWeekIds[0].articleIds.map((item) => item.articleId),
-        },
-      },
-      { title: 1, slug: 1, thumbnail: 1, alternativeTitle: 1 }
-    );
-
     if (articleData.length > 0) {
       for (let songsData of articleData) {
-        if (songsData.thumbnail) {
-          const thumbnail = await getBucketImageUrl(songsData.thumbnail);
-          songsData._doc.thumbnailUrl = thumbnail;
+        if (songsData.articleData.thumbnail) {
+          const thumbnail = await getBucketImageUrl(
+            songsData.articleData.thumbnail
+          );
+          songsData.articleData.thumbnailUrl = thumbnail;
         }
       }
     }
@@ -350,58 +290,40 @@ const getAllDjsOfTheWeek = async (req, res) => {
   }
 };
 
-const updateDjsOfTheWeekController = async (req, res) => {
+const createDjsOfTheWeekController = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
     const { articleId, djPosition } = req.params;
 
-    //  validation
-    const isExists = await ShowCasesModel.findOne(
-      {
-        title: "djs-of-the-week",
-        "articleIds.articleId": articleId,
-      },
-      {},
-      { upsert: true }
-    );
-    const isArticleExist = await articleModel.findById(articleId);
+    const spotLightData = await OnSpotLightModel.find();
 
-    if (!isArticleExist) {
-      await session.abortTransaction();
-      return res.status(400).json({ message: "Article does not exists" });
+    if (spotLightData.length >= 3) {
+      return res
+        .status(400)
+        .json({ message: "Maximum 3 article should present" });
     }
 
-    if (!isExists) {
-      await ShowCasesModel.findOneAndUpdate(
-        {
-          title: "djs-of-the-week",
-        },
-        {
-          $push: {
-            articleIds: { articleId: articleId, position: djPosition },
-          },
-        },
-        { new: true, upsert: true }
-      );
-    }
-    if (isExists) {
-      await ShowCasesModel.findOneAndUpdate(
-        {
-          title: "djs-of-the-week",
-        },
-        {
-          $pull: {
-            articleIds: { articleId: articleId },
-          },
-        },
-        { new: true, upsert: true }
-      );
+    for (const articleIdInSpotLight of spotLightData) {
+      if (articleId === articleIdInSpotLight.article_id) {
+        return res.status(400).json({ message: "already exists" });
+      }
     }
 
-    await articleModel.findByIdAndUpdate(articleId, {
-      isDjOfTheWeek: !isArticleExist.isDjOfTheWeek,
+    const isArticleExists = await articleModel.exists({ _id: articleId });
+
+    if (!isArticleExists) {
+      return res.status(400).json({ message: "Article not exists" });
+    }
+
+    const updateSpotLight = OnSpotLightModel.create({
+      article_id: articleId,
+      position: djPosition,
     });
+    const articleUpdate = articleModel.findByIdAndUpdate(articleId, {
+      isDjOfTheWeek: true,
+    });
+    await Promise.all([updateSpotLight, articleUpdate]);
 
     await session.commitTransaction();
     session.endSession();
@@ -410,6 +332,8 @@ const updateDjsOfTheWeekController = async (req, res) => {
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
+    console.log(error);
+
     res.status(500).json({ message: "server error", error });
   }
 };
@@ -418,41 +342,25 @@ const deleteDjOfTheWeekController = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
-    const { articleId } = req.params;
+    const { id } = req.params;
 
-    //  validation
-    const isExists = await ShowCasesModel.findOne({
-      $and: [
-        { title: "djs-of-the-week" },
-        { articleIds: { $in: [articleId] } },
-      ],
-    });
-    const isArticleExist = await articleModel.findById(articleId);
+    const isExists = await OnSpotLightModel.exists({ article_id: id });
 
     if (!isExists) {
-      await session.abortTransaction();
-      return res.status(400).json({ message: "Article don't exists" });
-    }
-    if (!isArticleExist) {
-      await session.abortTransaction();
-      return res.status(400).json({ message: "Article does not exists" });
+      return res.status(400).json({ message: "Article not in Spot light" });
     }
 
-    await new ShowCasesModel.findOneAndUpdate(
-      {
-        title: "djs-of-the-week",
-      },
-      {
-        $pull: {
-          articleIds: articleId,
-        },
-      },
-      { new: true }
-    );
+    const isArticleExists = await articleModel.exists({ _id: id });
 
-    await articleModel.findByIdAndUpdate(articleId, {
-      isDjOfTheWeek: !isArticleExist.isDjOfTheWeek,
+    if (!isArticleExists) {
+      return res.status(400).json({ message: "Article not exists" });
+    }
+
+    const updateSpotLight = OnSpotLightModel.findByIdAndDelete(isExists._id);
+    const articleUpdate = articleModel.findByIdAndUpdate(id, {
+      isDjOfTheWeek: false,
     });
+    await Promise.all([updateSpotLight, articleUpdate]);
 
     await session.commitTransaction();
     session.endSession();
@@ -467,28 +375,18 @@ const deleteDjOfTheWeekController = async (req, res) => {
 ////////////////////////////////////////for landing page
 const getAllLandingCards = async (req, res) => {
   try {
-    const articleData = await ShowCasesModel.aggregate([
-      {
-        $match: { title: "landing-card" },
-      },
-      {
-        $unwind: "$articleIds",
-      },
-      {
-        $addFields: {
-          "articleIds.articleId": { $toObjectId: "$articleIds.articleId" },
-        },
-      },
+    const articleData = await LandingModel.aggregate([
       {
         $lookup: {
           from: "articles",
-          localField: "articleIds.articleId",
+          localField: "article_id",
           foreignField: "_id",
           as: "articleData",
           pipeline: [
             {
               $project: {
-                _id: 1,
+                title: 1,
+                createdAt: 1,
                 thumbnail: 1,
                 slug: 1,
               },
@@ -497,21 +395,12 @@ const getAllLandingCards = async (req, res) => {
         },
       },
       {
-        $set: {
-          "articleIds.articleData": { $arrayElemAt: ["$articleData", 0] },
-        },
-      },
-      {
-        $group: {
-          _id: "$_id",
-          title: { $first: "$title" },
-          articleIds: { $push: "$articleIds" },
-        },
+        $unwind: "$articleData",
       },
     ]);
 
     if (articleData.length > 0) {
-      for (let songsData of articleData[0].articleIds) {
+      for (let songsData of articleData) {
         if (songsData.articleData.thumbnail) {
           const thumbnail = await getBucketImageUrl(
             songsData.articleData.thumbnail
@@ -521,10 +410,8 @@ const getAllLandingCards = async (req, res) => {
         }
       }
     }
-    const allLandingCards = articleData[0];
-    res
-      .status(200)
-      .json({ message: "success", allLandingCards: { ...allLandingCards } });
+
+    res.status(200).json({ message: "success", allLandingCards: articleData });
   } catch (error) {
     console.log(error);
 
@@ -532,62 +419,35 @@ const getAllLandingCards = async (req, res) => {
   }
 };
 
-const updateLandingCardsController = async (req, res) => {
+const createLandingCardsController = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
     const { articleId, title, categoryTitle } = req.body;
 
-    //  validation
-    const isExists = await ShowCasesModel.findOne(
-      {
-        title: "landing-card",
-        "articleIds.articleId": articleId,
-      },
-      {},
-      { upsert: true }
-    );
-    const isArticleExist = await articleModel.findById(articleId);
-
-    if (!isArticleExist) {
-      await session.abortTransaction();
-      return res.status(400).json({ message: "Article does not exists" });
-    }
-
-    if (!isExists) {
-      await ShowCasesModel.findOneAndUpdate(
-        {
-          title: "landing-card",
-        },
-        {
-          $push: {
-            articleIds: {
-              articleId: articleId,
-              cardTitle: title,
-              categoryTitle: categoryTitle,
-            },
-          },
-        },
-        { new: true, upsert: true }
-      );
-    }
-    if (isExists) {
-      await ShowCasesModel.findOneAndUpdate(
-        {
-          title: "landing-card",
-        },
-        {
-          $pull: {
-            articleIds: { articleId: articleId },
-          },
-        },
-        { new: true, upsert: true }
-      );
-    }
-
-    await articleModel.findByIdAndUpdate(articleId, {
-      isLandingCard: !isArticleExist.isLandingCard,
+    const isArticleExistInLandingCard = await LandingModel.exists({
+      article_id: articleId,
     });
+
+    if (isArticleExistInLandingCard) {
+      return res.status(400).json({ message: "already exists" });
+    }
+
+    const isArticleExists = await articleModel.exists({ _id: articleId });
+
+    if (!isArticleExists) {
+      return res.status(400).json({ message: "Article not exists" });
+    }
+
+    const updateLandingCard = LandingModel.create({
+      article_id: articleId,
+      cardTitle: title,
+      categoryTitle,
+    });
+    const articleUpdate = articleModel.findByIdAndUpdate(articleId, {
+      isLandingCard: true,
+    });
+    await Promise.all([updateLandingCard, articleUpdate]);
 
     await session.commitTransaction();
     session.endSession();
@@ -604,38 +464,25 @@ const deleteLandingCardsController = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
-    const { articleId } = req.params;
+    const { id } = req.params;
 
-    //  validation
-    const isExists = await ShowCasesModel.findOne({
-      $and: [{ title: "landing-card" }, { articleIds: { $in: [articleId] } }],
-    });
-    const isArticleExist = await articleModel.findById(articleId);
+    const isExists = await LandingModel.exists({ article_id: id });
 
     if (!isExists) {
-      await session.abortTransaction();
-      return res.status(400).json({ message: "Article don't exists" });
-    }
-    if (!isArticleExist) {
-      await session.abortTransaction();
-      return res.status(400).json({ message: "Article does not exists" });
+      return res.status(400).json({ message: "Article not in Landing Cards" });
     }
 
-    await new ShowCasesModel.findOneAndUpdate(
-      {
-        title: "landing-card",
-      },
-      {
-        $pull: {
-          articleIds: articleId,
-        },
-      },
-      { new: true }
-    );
+    const isArticleExists = await articleModel.exists({ _id: id });
 
-    await articleModel.findByIdAndUpdate(articleId, {
-      isLandingCard: !isArticleExist.isLandingCard,
+    if (!isArticleExists) {
+      return res.status(400).json({ message: "Article not exists" });
+    }
+
+    const updateLandingCards = LandingModel.findByIdAndDelete(isExists._id);
+    const articleUpdate = articleModel.findByIdAndUpdate(id, {
+      isLandingCard: false,
     });
+    await Promise.all([updateLandingCards, articleUpdate]);
 
     await session.commitTransaction();
     session.endSession();
@@ -649,15 +496,15 @@ const deleteLandingCardsController = async (req, res) => {
 
 module.exports = {
   getAllSongsOfTheWeek,
-  updateSongsOfTheWeekController,
+  createSongsOfTheWeekController,
   deleteSongOfTheWeekController,
   getAllArtistOfTheWeek,
-  updateArtistOfTheWeekController,
+  createArtistOfTheWeekController,
   deleteArtistOfTheWeekController,
   getAllDjsOfTheWeek,
-  updateDjsOfTheWeekController,
+  createDjsOfTheWeekController,
   deleteDjOfTheWeekController,
   getAllLandingCards,
-  updateLandingCardsController,
+  createLandingCardsController,
   deleteLandingCardsController,
 };

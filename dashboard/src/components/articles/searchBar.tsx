@@ -1,6 +1,6 @@
 "use client";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
-import React from "react";
+import React, { useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
 
 interface Props {
@@ -11,30 +11,37 @@ const SearchBar = ({ placeholder }: Props) => {
   const searchParams = useSearchParams();
   const pathName = usePathname();
   const { replace } = useRouter();
+  const [searchValue, setSearchValue] = useState<string>(
+    searchParams.get("search")?.toString() || ""
+  );
 
   // handle Search
-  const handleSearch = useDebouncedCallback((term: string) => {
+  const handleSearch = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
     const params = new URLSearchParams(searchParams);
-    if (term) {
-      params.set("search", term);
+    if (searchValue) {
+      params.set("search", searchValue);
     } else {
       params.delete("search");
     }
     replace(`${pathName}?${params.toString()}`);
-  }, 500);
+  };
 
   return (
     <form className="flex gap-5 w-full flex-wrap sm:flex-nowrap">
       <input
         type="text"
-        className="px-4 py-2 outline-none w-full rounded-lg border"
+        className="px-4 py-1 outline-none w-full rounded-lg border"
         placeholder={placeholder}
         onChange={(e) => {
-          handleSearch(e.target.value);
+          setSearchValue(e.target.value);
         }}
-        defaultValue={searchParams.get("search")?.toString()}
+        value={searchValue}
       />
-      <button className="px-4 py-2 bg-darkRed text-white rounded-lg">
+      <button
+        onClick={handleSearch}
+        className="px-4 py-1 bg-darkRed text-white rounded-md"
+      >
         Search
       </button>
     </form>

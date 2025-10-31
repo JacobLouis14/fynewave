@@ -17,6 +17,7 @@ const NewArticle = async () => {
   return (
     <ArticleForm
       categoriesData={{ categories: data, categoriesError: error }}
+      authorName={session.user.name}
     />
   );
 };

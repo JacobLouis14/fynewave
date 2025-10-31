@@ -6,7 +6,6 @@ import { getSongsOfTheWeek } from "@/services/actions";
 const Songsofweek = async () => {
   const { data: allSongsOfTheWeekData, error: allSongsOfTheWeekError } =
     await getSongsOfTheWeek();
-  console.log(allSongsOfTheWeekError);
 
   if (allSongsOfTheWeekError) {
     return <p className="text-center h-36">Something went wrong</p>;
@@ -16,13 +15,13 @@ const Songsofweek = async () => {
     allSongsOfTheWeekData.allSongsOfTheWeek &&
     allSongsOfTheWeekData.allSongsOfTheWeek.length < 1
   ) {
-    return <p className="text-center h-36 ">No songs of the week</p>;
+    return null;
   }
 
   return (
     <div className="py-10 px-3">
       {/* Title */}
-      <h2 className="text-center font-raleway font-semibold text-4xl">
+      <h2 className="text-center font-raleway font-bold text-4xl">
         Featured Songs{/* Songs of the Week */}
       </h2>
       {/* carosel wrapper */}

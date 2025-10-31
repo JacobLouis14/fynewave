@@ -1,11 +1,11 @@
 // user role extractor
-export const userRoleExtractor = (
-  roleData: number | string | undefined
-): string => {
+export const userRoleExtractor = (roleData: string | undefined): string => {
   switch (roleData) {
-    case 0:
+    case "super_admin":
+      return "Super Admin";
+    case "admin":
       return "Admin";
-    case 1:
+    case "content_writer":
       return "Content Writter";
     default:
       return "Unknown Role";

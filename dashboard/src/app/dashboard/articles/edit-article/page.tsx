@@ -17,7 +17,10 @@ const EditArticles = async ({
   if (!session?.user) redirect("/");
 
   // if user
-  const { data, error, isLoading } = await getArticleById(searchParams.query);
+  const { data, error, isLoading } = await getArticleById(
+    searchParams.query,
+    session.user.token
+  );
 
   if (isLoading) {
     return (

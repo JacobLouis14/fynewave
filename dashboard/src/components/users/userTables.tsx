@@ -1,58 +1,76 @@
 import { UserDataModel } from "@/models/auth";
 import { userRoleExtractor } from "@/utils/roleExtractor";
 import React from "react";
-import SuspendToggler from "./suspendToggler";
-import EditPermissionToggler from "./editPermissionToggler";
-import Link from "next/link";
-import UserEditDataModal from "./userEditDataModal";
+import UserActionButton from "./userActionBtn";
 
-const UserTables = ({ userData }: { userData: UserDataModel[] | null }) => {
-  // if no user Data
-  if (userData && userData?.length < 1) {
-    return <p className="text-center">No user Data found</p>;
+interface Props {
+  userData: UserDataModel[] | null;
+  role: string;
+  currentUserId: string;
+}
+
+const getActionVisibility = (
+  role: string,
+  currentUserId: string,
+  userId: string,
+  userRole: string
+) => {
+  if (role === "super_admin" && currentUserId !== userId) return true;
+  if (
+    role === "admin" &&
+    userRole !== "admin" &&
+    userRole !== "super_admin" &&
+    currentUserId !== userId
+  )
+    return true;
+  return false;
+};
+
+const UserTables = ({ userData, role, currentUserId }: Props) => {
+  // Early return if no user data
+  if (!userData || userData.length === 0) {
+    return <p className="text-center">No user data found</p>;
   }
+
+  const tableHeaders = ["Name", "Role", "Email", "Actions"];
 
   return (
     <table className="table-auto border-collapse w-full">
       <thead>
         <tr>
-          <th className="p-2">Name</th>
-          <th className="p-2">Role</th>
-          <th className="p-2">Email</th>
-          <th className="p-2">Suspend</th>
-          <th className="p-2">Allow Edit</th>
-          <th className="p-2">Edits alloted</th>
+          {tableHeaders.map((header, index) => (
+            <th key={index} className="p-2">
+              {header}
+            </th>
+          ))}
         </tr>
       </thead>
       <tbody className="text-center">
-        {userData?.map((users, index) => (
-          <tr key={index}>
-            <td className="p-2">{users?.name}</td>
-            <td className={`p-2`}>{userRoleExtractor(users?.role)}</td>
-            <td className="p-2">{users?.email}</td>
-            {users.role === 1 && (
-              <td className="p-2">
-                <SuspendToggler
-                  suspendValue={users.isSuspended}
-                  userId={users._id}
-                />
-              </td>
-            )}
-            {users.role === 1 && (
-              <td className="p-2">
-                <EditPermissionToggler
-                  editValue={users.isEditAllowed}
-                  userId={users._id}
-                />
-              </td>
-            )}
-            {users.role === 1 && (
-              <td>
-                <UserEditDataModal userData={users} />
-              </td>
-            )}
-          </tr>
-        ))}
+        {userData.map((users, index) => {
+          const shouldShowActions = getActionVisibility(
+            role,
+            currentUserId,
+            users._id || "",
+            users.role
+          );
+
+          return (
+            <tr key={index}>
+              <td className="p-2">{users?.name}</td>
+              <td className="p-2">{userRoleExtractor(users?.role)}</td>
+              <td className="p-2">{users?.email}</td>
+              {shouldShowActions && (
+                <td>
+                  <UserActionButton
+                    userData={users}
+                    currentUserRole={role}
+                    currentUserId={currentUserId}
+                  />
+                </td>
+              )}
+            </tr>
+          );
+        })}
       </tbody>
     </table>
   );

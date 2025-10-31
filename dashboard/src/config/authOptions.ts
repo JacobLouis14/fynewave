@@ -49,7 +49,7 @@ export const authOptions: NextAuthOptions = {
     maxAge: 24 * 60 * 60,
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.user = user;
         // const decodedToken: any = jwtDecode(user.token);
@@ -69,7 +69,14 @@ export const authOptions: NextAuthOptions = {
       //   token.maxAge = timeLeft;
       // }
 
-      return Promise.resolve(token);
+      if (trigger === "update" && session?.name) {
+        token.user = {
+          ...token.user,
+          name: session.name,
+        };
+      }
+
+      return token;
     },
     async session({ session, token }) {
       if (token) {

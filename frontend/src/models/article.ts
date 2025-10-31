@@ -8,7 +8,10 @@ export interface ArticleModel {
   articleContentTwo: string;
   articleContentThree: string;
   tags: string[];
-  author: string;
+  author: {
+    _id: string;
+    name: string;
+  };
   createdAt?: string;
   updatedAt?: string;
   thumbnailUrl?: string | null;

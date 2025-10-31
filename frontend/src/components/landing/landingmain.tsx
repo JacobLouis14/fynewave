@@ -8,18 +8,17 @@ const Landingmain = async () => {
   const { data: landingData, error: landingError } = await getLandingCards();
 
   if (landingError) {
-    return <p className="text-center">Error in landing cards</p>;
+    return <p className="text-center">something went wrong</p>;
   }
-  const landingCardDetatils = landingData?.allLandingCards.articleIds.sort(
-    (a, b) => {
-      const order = [
-        "artist-of-the-week",
-        "song-of-the-week",
-        "dj-of-the-week",
-      ];
-      return order.indexOf(a.categoryTitle) - order.indexOf(b.categoryTitle);
-    }
-  );
+
+  // IF NO DATA THEN RETURN NULL
+  if (landingData?.allLandingCards && landingData?.allLandingCards.length < 1)
+    return null;
+
+  const landingCardDetatils = landingData?.allLandingCards.sort((a, b) => {
+    const order = ["artist-of-the-week", "song-of-the-week", "dj-of-the-week"];
+    return order.indexOf(a.categoryTitle) - order.indexOf(b.categoryTitle);
+  });
 
   return (
     <ScrollListner>
@@ -34,7 +33,7 @@ const Landingmain = async () => {
         {landingData?.allLandingCards && landingCardDetatils ? (
           <div className="grid grid-flow-col-1 lg:grid-cols-3 gap-5 mt-10 px-5 md:px-7 w-screen">
             {landingCardDetatils?.map((cardDetails) => (
-              <div key={cardDetails.articleId}>
+              <div key={cardDetails._id}>
                 <LandingCard
                   categoryTitle={
                     (cardDetails && cardDetails.categoryTitle) || ""

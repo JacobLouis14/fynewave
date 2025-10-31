@@ -14,13 +14,13 @@ const Card = <T extends boolean>({ forArtist, CardData }: Props<T>) => {
   }
 
   return (
-    <Link href={CardData.slug || "slug"}>
+    <Link href={CardData.articleData.slug || "slug"}>
       <div className="min-w-[255px] max-w-[235px] md:max-w-[331px] md:w-[331px] group cursor-pointer">
         <div className="relative w-full h-[221px] md:h-[296px] overflow-hidden rounded-2xl">
           <Image
             src={
-              CardData.thumbnailUrl
-                ? CardData.thumbnailUrl
+              CardData.articleData.thumbnailUrl
+                ? CardData.articleData.thumbnailUrl
                 : "https://images.smiletemplates.com/uploads/screenshots/651/0000651648/powerpoint-template-450w.jpg"
             }
             alt="card Image"
@@ -33,21 +33,23 @@ const Card = <T extends boolean>({ forArtist, CardData }: Props<T>) => {
         </div>
         {/* content */}
         <div className="text-[#86818B] mt-3">
-          <p className="font-raleway font-light">{CardData?.category}</p>
+          <p className="font-raleway font-light">
+            {CardData?.articleData.category}
+          </p>
           <h1
             className={`font-raleway font-bold text-black pt-3 text-2xl group-hover:text-headerRedTo`}
           >
-            {CardData?.alternativeTitle}
+            {CardData?.articleData.alternativeTitle}
           </h1>
-          {!forArtist && "album" in CardData && (
+          {!forArtist && "album" in CardData.articleData && (
             <p
               className={`font-raleway font-light pt-3 group-hover:font-semibold group-hover:text-black`}
             >
-              {CardData?.album || "Unknown Album"}
+              {CardData?.articleData.album || "Unknown Album"}
             </p>
           )}
           <p className="font-raleway font-light pt-2 text-sm">
-            {toReadableDate(CardData?.createdAt || "")}
+            {toReadableDate(CardData?.articleData.createdAt || "")}
           </p>
         </div>
       </div>

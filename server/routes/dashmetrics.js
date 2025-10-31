@@ -1,18 +1,14 @@
 const express = require("express");
 const {
   getCategoryMetrics,
-  getShowcasesMetrics,
-  getUsersMetrics,
+  dashboardCard,
 } = require("../controllers/dashboardMetrics");
 const router = express.Router();
 
-// article metrics
-router.get("/get-showcases-metrics", getShowcasesMetrics);
+// DASHBOARD CARDS
+router.get("/get-dashboard-cards", dashboardCard);
 
 // category metrics
 router.get("/get-category-metrics", getCategoryMetrics);
-
-// user metrics
-router.get("/get-user-metrics", getUsersMetrics);
 
 module.exports = router;
