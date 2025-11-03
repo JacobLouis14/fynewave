@@ -76,7 +76,7 @@ router.post(
   createDjsOfTheWeekController
 );
 
-// delete artist of the week
+// delete dj of the week
 router.delete(
   "/delete-dj-of-the-week/:id",
   checkIsAuthorized,

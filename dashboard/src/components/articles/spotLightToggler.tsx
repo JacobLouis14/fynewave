@@ -33,6 +33,10 @@ const SpotLightTogglerButton = ({ isDjOfTheWeek, articleId }: Props) => {
     try {
       setIsLoading(true);
 
+      if (!djPositioningNumber) {
+        return toast.warning("position required");
+      }
+
       if (!isDjOfTheWeek) {
         const { data, error } = await addDjsOfTheWeekAction(
           articleId,
@@ -41,11 +45,11 @@ const SpotLightTogglerButton = ({ isDjOfTheWeek, articleId }: Props) => {
         );
         if (error) {
           console.log(error);
-          toast.error("error in removing from artist of the week");
+          toast.error(`error: ${error.message}`);
           return;
         }
         if (data) {
-          toast.success("sucessfully remove artist of the week");
+          toast.success("sucessfully added");
           cancelHandler();
           return;
         }
@@ -56,11 +60,11 @@ const SpotLightTogglerButton = ({ isDjOfTheWeek, articleId }: Props) => {
         );
         if (error) {
           console.log(error);
-          toast.error("error in updating artist of the week");
+          toast.error(`error: ${error.message}`);
           return;
         }
         if (data) {
-          toast.success("sucessfully update artist of the week");
+          toast.success("sucessfully removed");
           cancelHandler();
           return;
         }

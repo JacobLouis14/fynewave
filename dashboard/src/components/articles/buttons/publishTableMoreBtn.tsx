@@ -59,7 +59,7 @@ const PublishTableMoreButton = ({
         </svg>
       </button>
       {isModalOpen && (
-        <div className="absolute top-5 right-0 px-3 py-2 bg-white rounded-md min-w-52 min-h-32 border flex flex-col gap-3">
+        <div className="absolute top-5 right-0 px-3 py-2 bg-white rounded-md min-w-52 min-h-32 border flex flex-col gap-3 z-40">
           <div className="flex items-center justify-between gap-2 py-2">
             <p>Featured songs</p>
             <FeaturedSongsTogglerButton
