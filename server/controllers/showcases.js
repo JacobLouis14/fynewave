@@ -279,6 +279,7 @@ const getAllDjsOfTheWeek = async (req, res) => {
         }
       }
     }
+    console.log(articleData);
 
     res
       .status(200)

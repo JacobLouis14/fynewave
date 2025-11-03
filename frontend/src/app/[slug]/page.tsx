@@ -43,6 +43,7 @@ const Article = async ({ params }: Props) => {
 
   const articleDataBySlug = articlePostData?.articleDataBySlug ?? null;
   const relatedArticles = articlePostData?.relatedArticles ?? null;
+  console.log(articleDataBySlug?.author.name);
 
   return (
     <>

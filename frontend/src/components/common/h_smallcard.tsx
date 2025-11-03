@@ -41,7 +41,7 @@ const Horizontalsmallcard = ({ articleData }: Props) => {
           <div className="flex flex-col xl:flex-row mt-3 gap-2 justify-between text-[#7D7983] w-full">
             <div className="flex items-center gap-3 text-sm lg:text-md">
               <PersonOutlineOutlinedIcon />
-              <p className="font-poppins">{articleData.author.name}</p>
+              <p className="font-poppins">{articleData.author.name || ""}</p>
             </div>
             <div className="flex gap-3 items-center text-sm lg:text-md">
               <CalendarMonthOutlinedIcon />

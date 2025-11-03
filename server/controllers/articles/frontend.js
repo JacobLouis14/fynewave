@@ -184,6 +184,7 @@ const otherBlogsController = async (req, res) => {
         article.thumbnailUrl = imageUrl;
       }
     }
+    console.log(otherBlogsData);
 
     res.status(200).json({ message: "success", otherBlogsData });
   } catch (error) {
@@ -195,15 +196,20 @@ const getArticleDataBySlugController = async (req, res) => {
   try {
     const { slug } = req.params;
 
-    const isArticleExist = await articleModel.findOneAndUpdate(
-      {
-        slug,
-        status: "published",
-      },
-      {
-        $inc: { views: 1 },
-      }
-    );
+    const isArticleExist = await articleModel
+      .findOneAndUpdate(
+        {
+          slug,
+          status: "published",
+        },
+        {
+          $inc: { views: 1 },
+        },
+        {
+          new: true,
+        }
+      )
+      .populate("author", "name");
 
     if (!isArticleExist) {
       return res.status(400).json({ message: "No article exists" });
